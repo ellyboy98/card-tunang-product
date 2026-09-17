@@ -27,47 +27,18 @@ export type FontPresetKey = (typeof FONT_PRESET_KEYS)[number];
 
 export type FontPreset = {
   label: string;
-  /** CSS font-family stack for names and headings. */
+  /** Family for names and headings. Loaded by components/card/fonts.ts via next/font. */
   display: string;
-  /** CSS font-family stack for body text. */
+  /** Family for body text. */
   body: string;
-  /** Google Fonts stylesheet for this preset only. */
-  href: string;
 };
 
-const GF = "https://fonts.googleapis.com/css2?";
-
 export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
-  classic: {
-    label: "Klasik",
-    display: '"Cormorant Garamond", Georgia, serif',
-    body: '"Nunito Sans", system-ui, sans-serif',
-    href: `${GF}family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Nunito+Sans:wght@400;600;700&display=swap`,
-  },
-  script: {
-    label: "Skrip",
-    display: '"Great Vibes", "Brush Script MT", cursive',
-    body: '"EB Garamond", Georgia, serif',
-    href: `${GF}family=Great+Vibes&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap`,
-  },
-  modern: {
-    label: "Moden",
-    display: '"Playfair Display", Georgia, serif',
-    body: "Lora, Georgia, serif",
-    href: `${GF}family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Lora:ital,wght@0,400;0,500;0,600;1,400&display=swap`,
-  },
-  minimal: {
-    label: "Minimal",
-    display: "Fraunces, Georgia, serif",
-    body: "Fraunces, Georgia, serif",
-    href: `${GF}family=Fraunces:ital,wght@0,400;0,500;0,600;1,400;1,500&display=swap`,
-  },
-  jawi: {
-    label: "Jawi/Arab",
-    display: 'Amiri, "Times New Roman", serif',
-    body: 'Amiri, "Times New Roman", serif',
-    href: `${GF}family=Amiri:ital,wght@0,400;0,700;1,400;1,700&display=swap`,
-  },
+  classic: { label: "Klasik", display: "Cormorant Garamond", body: "Nunito Sans" },
+  script: { label: "Skrip", display: "Great Vibes", body: "EB Garamond" },
+  modern: { label: "Moden", display: "Playfair Display", body: "Lora" },
+  minimal: { label: "Minimal", display: "Fraunces", body: "Fraunces" },
+  jawi: { label: "Jawi/Arab", display: "Amiri", body: "Amiri" },
 };
 
 export const DEFAULT_COLOR_PRESET: ColorPresetKey = "blush";

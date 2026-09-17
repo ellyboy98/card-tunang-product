@@ -73,7 +73,7 @@ Rules that keep this honest:
 ## Request flows
 
 **Guest opens the card**
-`GET /` → `page.tsx` calls `settings.service.get()` → renders `<Card settings=… />` with the font `<link>` and CSS variables for the chosen presets → client hydrates Cover, Countdown, Rsvp.
+`GET /` → `page.tsx` calls `settings.service.get()` → renders `<Card settings=… guests=… />` with CSS variables for the chosen presets (fonts come from `next/font`) → client hydrates Cover, Countdown, Rsvp.
 
 **Guest confirms**
 `Rsvp.tsx` → `GET /api/guests` (id, label, group_name only; `is_hidden = false`) → user selects → `GET /api/rsvp?guest_id=` for current status and pax → `POST /api/rsvp {guest_id, status, pax}` → `rsvp.service.respond()` clamps pax to the allocation and writes.

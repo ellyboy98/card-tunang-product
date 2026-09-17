@@ -96,6 +96,15 @@ export function fromKlLocalInput(local: string): string | null {
   return m ? `${m[1]}T${m[2]}:00+08:00` : null;
 }
 
+/**
+ * Splits "Nur Aisyah binti Kamaruddin" into the given name and the bin/binti line,
+ * so the card can set them at different sizes while the admin keeps one field.
+ */
+export function splitPatronym(name: string): { given: string; patronym: string | null } {
+  const m = /^(.*?)\s+((?:bin|binti|bt\.?|b\.)\s+.+)$/i.exec(name.trim());
+  return m ? { given: m[1], patronym: m[2] } : { given: name.trim(), patronym: null };
+}
+
 /** Malaysian number to international digits without "+": 0123456789 → 60123456789. */
 export function toIntlMy(phone: string): string {
   const digits = phone.replace(/\D/g, "");

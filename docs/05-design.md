@@ -18,7 +18,7 @@ Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals.
 
 ## Tokens
 
-These are the `blush` colour preset and `classic` font preset. Other presets change the values, not the structure. All card styling reads from these CSS variables; nothing in the card is hard-coded to a hex value.
+These are the `blush` colour preset and `classic` font preset. Other presets change the values, not the structure. All card styling reads from these CSS variables; nothing in the card is hard-coded to a hex value. A derived `--c-accent-text` (the accent mixed halfway to ink) carries accent-coloured text and filled buttons; the raw accent alone does not reach WCAG contrast on the light presets. Strokes and botanicals keep the raw accent.
 
 ```css
 :root {
@@ -43,7 +43,7 @@ Colour presets to ship (`lib/presets.ts`), each with the same five keys:
 | `emerald` | Zamrud | #143D33 | #EFE9DC | #C9B27A | #6F9A85 | #1E5246 |
 | `plum` | Ungu | #2B1F2E | #F3EAF2 | #D6A6C7 | #8F9E88 | #3E2D42 |
 
-Font presets, each a Google Fonts URL plus two family names:
+Font presets, two family names each. The files are self-hosted through `next/font` (`components/card/fonts.ts`), which inlines the `@font-face` rules and adds metric-matched fallbacks; the Google Fonts stylesheet was render-blocking and cost the card its Lighthouse budget:
 
 | key | label | display | body |
 |---|---|---|---|
@@ -53,7 +53,7 @@ Font presets, each a Google Fonts URL plus two family names:
 | `minimal` | Minimal | Fraunces | Fraunces |
 | `jawi` | Jawi/Arab | Amiri | Amiri |
 
-Load only the selected preset's stylesheet. Always give a fallback stack.
+Preload is off, so only the selected preset's font files are downloaded. Always give a fallback stack.
 
 ## Type scale (card)
 

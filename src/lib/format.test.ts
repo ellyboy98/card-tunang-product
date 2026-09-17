@@ -10,6 +10,7 @@ import {
   klDateKey,
   mapLinks,
   parseLatLng,
+  splitPatronym,
   timePeriodMs,
   toIntlMy,
   toKlLocalInput,
@@ -108,5 +109,15 @@ describe("parseLatLng", () => {
     expect(parseLatLng("https://maps.app.goo.gl/AbCdEf")).toBeNull();
     expect(parseLatLng("Dewan Seri Melati")).toBeNull();
     expect(parseLatLng("120.5, 30.1")).toBeNull();
+  });
+});
+
+describe("splitPatronym", () => {
+  it("separates the bin/binti line and leaves other names whole", () => {
+    expect(splitPatronym("Nur Aisyah binti Kamaruddin")).toEqual({ given: "Nur Aisyah", patronym: "binti Kamaruddin" });
+    expect(splitPatronym("Muhammad Hafiz Bin Rosli")).toEqual({ given: "Muhammad Hafiz", patronym: "Bin Rosli" });
+    expect(splitPatronym("Hafiz b. Rosli")).toEqual({ given: "Hafiz", patronym: "b. Rosli" });
+    expect(splitPatronym("Sabrina Tan")).toEqual({ given: "Sabrina Tan", patronym: null });
+    expect(splitPatronym("Robin Hood")).toEqual({ given: "Robin Hood", patronym: null });
   });
 });

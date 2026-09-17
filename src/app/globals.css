@@ -10,8 +10,8 @@
   --color-accent: #c48e93;
   --color-danger: #9e403a;
   --color-success: #2e5c3e;
-  --font-sans: "Nunito Sans", system-ui, sans-serif;
-  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-sans: var(--font-nunito), "Nunito Sans", system-ui, sans-serif;
+  --font-display: var(--font-cormorant), "Cormorant Garamond", Georgia, serif;
 }
 
 /* Keyboard users always see where they are. */
