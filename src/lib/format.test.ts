@@ -4,6 +4,7 @@ import {
   formatTimeMs,
   formatTimeRangeMs,
   formatWeekdayMs,
+  fromKlLocalInput,
   googleCalendarUrl,
   icsDataUrl,
   klDateKey,
@@ -11,6 +12,7 @@ import {
   parseLatLng,
   timePeriodMs,
   toIntlMy,
+  toKlLocalInput,
 } from "./format";
 
 // 2027-03-14 11:00 in Kuala Lumpur (UTC+8) is 03:00 UTC.
@@ -50,6 +52,16 @@ describe("Malay time", () => {
   it("defaults the range end to start + 3 h", () => {
     expect(formatTimeRangeMs(kl("2027-03-14T11:00:00"))).toBe("11:00 pagi hingga 2:00 petang");
     expect(formatTimeRangeMs(kl("2027-03-14T11:00:00"), kl("2027-03-14T16:00:00"))).toBe("11:00 pagi hingga 4:00 petang");
+  });
+});
+
+describe("datetime-local round trip", () => {
+  it("shows the KL wall-clock and reads it back with the +08:00 offset", () => {
+    expect(toKlLocalInput("2027-03-14T03:00:00.000Z")).toBe("2027-03-14T11:00");
+    expect(fromKlLocalInput("2027-03-14T11:00")).toBe("2027-03-14T11:00:00+08:00");
+    expect(new Date(fromKlLocalInput("2027-03-14T11:00")!).toISOString()).toBe("2027-03-14T03:00:00.000Z");
+    expect(toKlLocalInput(null)).toBe("");
+    expect(fromKlLocalInput("")).toBeNull();
   });
 });
 

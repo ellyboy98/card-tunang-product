@@ -1,1 +1,29 @@
 @import "tailwindcss";
+
+/* Admin tokens (docs/05 "Admin"). The card has its own variables in card.css. */
+@theme {
+  --color-paper: #f7f5f2;
+  --color-panel: #ffffff;
+  --color-line: #e6dedb;
+  --color-muted: #7f737a;
+  --color-ink: #4b3440;
+  --color-accent: #c48e93;
+  --color-danger: #9e403a;
+  --color-success: #2e5c3e;
+  --font-sans: "Nunito Sans", system-ui, sans-serif;
+  --font-display: "Cormorant Garamond", Georgia, serif;
+}
+
+/* Keyboard users always see where they are. */
+:focus-visible {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}
+
+/* Chrome focuses a segment inside date/time inputs, so :focus-visible never matches the box. */
+input[type="datetime-local"]:focus,
+input[type="date"]:focus,
+input[type="time"]:focus {
+  outline: 2px solid var(--color-ink);
+  outline-offset: 2px;
+}

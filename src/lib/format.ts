@@ -81,6 +81,21 @@ export function klDateKey(d: Date): string {
   return `${p.year}-${pad2(p.month)}-${pad2(p.day)}`;
 }
 
+/** ISO instant → "YYYY-MM-DDTHH:mm" in KL time, the value an <input type="datetime-local"> wants. */
+export function toKlLocalInput(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const p = klParts(d);
+  return `${p.year}-${pad2(p.month)}-${pad2(p.day)}T${pad2(p.hour)}:${pad2(p.minute)}`;
+}
+
+/** "YYYY-MM-DDTHH:mm" typed as KL wall-clock → ISO with +08:00 (Malaysia has no DST); null when empty. */
+export function fromKlLocalInput(local: string): string | null {
+  const m = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/.exec(local);
+  return m ? `${m[1]}T${m[2]}:00+08:00` : null;
+}
+
 /** Malaysian number to international digits without "+": 0123456789 → 60123456789. */
 export function toIntlMy(phone: string): string {
   const digits = phone.replace(/\D/g, "");

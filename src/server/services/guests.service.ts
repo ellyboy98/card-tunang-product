@@ -1,5 +1,5 @@
 // Guest list rules: totals, and keeping confirmed_pax consistent with pax and status.
-import type { GuestOption, Totals } from "@/lib/types";
+import type { GuestOption, GuestRow, Totals } from "@/lib/types";
 import type { GuestInput, GuestPatch } from "@/lib/validation";
 import type { Guest } from "../db/schema";
 import { HttpError } from "../errors";
@@ -69,4 +69,9 @@ export function reorder(ids: number[], deps: GuestsDeps = guestsRepo): Promise<v
   return deps.reorder(ids);
 }
 
-export const guestsService = { list, listForDropdown, create, update, remove, reorder, totals };
+/** Row → JSON shape; the same thing NextResponse.json produces, typed for server-rendered props. */
+export function toRow(g: Guest): GuestRow {
+  return { ...g, createdAt: g.createdAt.toISOString(), updatedAt: g.updatedAt.toISOString() };
+}
+
+export const guestsService = { list, listForDropdown, create, update, remove, reorder, totals, toRow };

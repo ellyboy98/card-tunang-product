@@ -93,3 +93,13 @@ export type RsvpInput = z.infer<typeof rsvpInput>;
 export type ScheduleItem = z.infer<typeof scheduleItem>;
 export type Contact = z.infer<typeof contact>;
 export type SettingsInput = z.infer<typeof settingsInput>;
+
+/** Zod issues → { "schedule.0.label": "message" }, first message per field, for inline errors. */
+export function issueMap(error: z.ZodError): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const issue of error.issues) {
+    const key = issue.path.map(String).join(".");
+    if (!(key in out)) out[key] = issue.message;
+  }
+  return out;
+}
