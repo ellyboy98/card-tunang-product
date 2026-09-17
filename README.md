@@ -19,7 +19,7 @@ Admin at http://localhost:3000/admin, password `admin`. Uploads go to a Compose 
 
 ## Deploy
 
-Follow `docs/07-deployment.md`. Production needs four things beside the Neon and Blob integrations: `ADMIN_PASSWORD`, `ADMIN_SECRET`, `STORAGE_DRIVER=vercel-blob` and `NEXT_PUBLIC_SITE_URL`. `.env.example` lists every variable with a note on where it comes from.
+Live: production at https://kad-tunang.vercel.app (Vercel team LAPLACE, project `kad-tunang`, `main` branch). Pushes to `development` build previews. Follow `docs/07-deployment.md` for a fresh setup. Production needs four things beside the Neon and Blob integrations: `ADMIN_PASSWORD`, `ADMIN_SECRET`, `STORAGE_DRIVER=vercel-blob` and `NEXT_PUBLIC_SITE_URL`. `.env.example` lists every variable with a note on where it comes from.
 
 ## Where things are
 
@@ -57,6 +57,13 @@ Kept here so the docs stay the spec and the reasons stay findable. Where a doc w
 - Names are split at "bin" or "binti" when rendered: given name large, patronym small beneath, as in the Figma. The admin keeps one field per name.
 - The public page passes the dropdown guests to the card as a prop instead of the card fetching `/api/guests` on load. One fewer request before the RSVP section is usable; the route still exists.
 - The 404 and error pages use the default blush and classic presets rather than the configured ones, so they can be static and never read the database at build time.
+
+**Deployment**
+
+- `vercel.json` pins functions to `sin1` (Singapore), and the Neon and Blob stores were created there too. The docs don't name a region; the default `iad1` would put an ocean between the guests, the functions and the database.
+- Storage was created from the CLI, not the dashboard: `vercel integration add neon -n kad-tunang-db -m region=sin1` (after accepting Neon's marketplace terms once in the browser) and `vercel blob create-store kad-tunang-blob --access public --region sin1 --yes`. Both inject their variables into every environment.
+- Preview deployments keep Vercel's default authentication, so a preview link only opens for someone signed in to the Vercel team. Production is open. Turn it off under Settings → Deployment Protection if the family needs to test a preview on their phones.
+- The Node image has no `curl`, so `vercel curl` (for protected previews) has to run from the host.
 
 **Admin**
 
