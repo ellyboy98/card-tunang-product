@@ -1,11 +1,11 @@
 // Guest list rules: totals, and keeping confirmed_pax consistent with pax and status.
-import type { Totals } from "@/lib/types";
+import type { GuestOption, Totals } from "@/lib/types";
 import type { GuestInput, GuestPatch } from "@/lib/validation";
 import type { Guest } from "../db/schema";
 import { HttpError } from "../errors";
 import { guestsRepo, type GuestUpdate } from "../repositories/guests.repo";
 
-export type GuestsDeps = Pick<typeof guestsRepo, "list" | "getById" | "create" | "update" | "remove" | "reorder">;
+export type GuestsDeps = Pick<typeof guestsRepo, "list" | "listVisibleForDropdown" | "getById" | "create" | "update" | "remove" | "reorder">;
 
 const notFound = () => new HttpError(404, "Tetamu tidak dijumpai");
 
@@ -23,6 +23,11 @@ export function totals(rows: Guest[]): Totals {
 export async function list(deps: GuestsDeps = guestsRepo): Promise<{ guests: Guest[]; totals: Totals }> {
   const guests = await deps.list();
   return { guests, totals: totals(guests) };
+}
+
+/** The public dropdown: id, label and group only, hidden rows excluded. */
+export function listForDropdown(deps: GuestsDeps = guestsRepo): Promise<GuestOption[]> {
+  return deps.listVisibleForDropdown();
 }
 
 export function create(input: GuestInput, deps: GuestsDeps = guestsRepo): Promise<Guest> {
@@ -64,4 +69,4 @@ export function reorder(ids: number[], deps: GuestsDeps = guestsRepo): Promise<v
   return deps.reorder(ids);
 }
 
-export const guestsService = { list, create, update, remove, reorder, totals };
+export const guestsService = { list, listForDropdown, create, update, remove, reorder, totals };

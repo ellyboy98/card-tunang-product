@@ -35,7 +35,8 @@ export const guestPatch = z.object(guestFields).partial().extend({
 export const rsvpInput = z.object({
   guestId: z.number().int().positive(),
   status: z.enum(["attending", "declined"]),
-  pax: z.number().int().min(1).max(50).optional(),
+  // No upper bound here: the service clamps to the household's allocation.
+  pax: z.number().int().min(1).optional(),
 });
 
 export const reorderInput = z.object({

@@ -112,7 +112,7 @@ export const guestPatch = guestInput.partial().extend({
 export const rsvpInput = z.object({
   guestId: z.number().int().positive(),
   status: z.enum(["attending", "declined"]),
-  pax: z.number().int().min(1).max(50).optional(),
+  pax: z.number().int().min(1).optional(), // no upper bound: the service clamps to the allocation
 });
 export const scheduleItem = z.object({ time: z.string().trim().max(20), label: z.string().trim().max(120) });
 export const contact = z.object({ name: z.string().trim().max(80), relation: z.string().trim().max(60).optional(), phone: z.string().trim().regex(/^\+?\d{9,13}$/) });
