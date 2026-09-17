@@ -3,7 +3,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import "./card.css";
 import { formatDateMs, formatTimeRangeMs, formatWeekdayMs, googleCalendarUrl, icsDataUrl, mapLinks, splitPatronym, telUrl, whatsappUrl } from "@/lib/format";
-import { colorPreset, fontPresetKey } from "@/lib/presets";
+import { colorPreset, fontPresetKey, textAccent } from "@/lib/presets";
 import type { GuestOption } from "@/lib/types";
 import type { SettingsInput } from "@/lib/validation";
 import { Arch } from "./Arch";
@@ -27,25 +27,24 @@ export function coupleNames(s: CardSettings): { first: string; second: string } 
   return s.hostSide === "bride" ? { first: s.brideName, second: s.groomName } : { first: s.groomName, second: s.brideName };
 }
 
-/** Halfway between two hex colours; used to derive a text-safe accent. */
-function mixHex(a: string, b: string): string {
-  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
-  return "#" + [0, 1, 2].map((i) => Math.round((ch(a, i) + ch(b, i)) / 2).toString(16).padStart(2, "0")).join("");
-}
-
-export function cardVars(s: CardSettings): CSSProperties {
-  const c = colorPreset(s.colorPreset);
-  const f = CARD_FONTS[fontPresetKey(s.fontPreset)];
+/** CSS variables the card theme reads. Unknown keys fall back to the defaults. */
+export function presetVars(colorKey: string, fontKey: string): CSSProperties {
+  const c = colorPreset(colorKey);
+  const f = CARD_FONTS[fontPresetKey(fontKey)];
   return {
     "--c-bg": c.bg,
     "--c-ink": c.ink,
     "--c-accent": c.accent,
-    "--c-accent-text": mixHex(c.accent, c.ink),
+    "--c-accent-text": textAccent(c),
     "--c-leaf": c.leaf,
     "--c-soft": c.soft,
     "--f-display": f.display,
     "--f-body": f.body,
   } as CSSProperties;
+}
+
+export function cardVars(s: CardSettings): CSSProperties {
+  return presetVars(s.colorPreset, s.fontPreset);
 }
 
 function Name({ name, full }: { name: string; full: boolean }) {

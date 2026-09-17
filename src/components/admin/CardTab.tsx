@@ -1,12 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatDateMs, fromKlLocalInput, parseLatLng, toKlLocalInput } from "@/lib/format";
 import { COLOR_PRESET_KEYS, COLOR_PRESETS, FONT_PRESET_KEYS, FONT_PRESETS } from "@/lib/presets";
 import type { SettingsDto } from "@/lib/types";
 import { issueMap, settingsInput, type Contact, type ScheduleItem, type SettingsInput } from "@/lib/validation";
+import { CardPreview } from "./CardPreview";
 import { ListEditor } from "./ListEditor";
 import { Button, cx, Field, Input, Notice, Panel, Select, Textarea } from "./ui";
 import { UploadZone } from "./UploadZone";
@@ -16,7 +17,7 @@ function stripMeta({ updatedAt: _updatedAt, ...form }: SettingsDto): SettingsInp
   return form;
 }
 
-export function CardTab({ initial, preview }: { initial: SettingsDto; preview?: (form: SettingsInput) => ReactNode }) {
+export function CardTab({ initial }: { initial: SettingsDto }) {
   const router = useRouter();
   const [form, setForm] = useState<SettingsInput>(() => stripMeta(initial));
   const [savedAt, setSavedAt] = useState(initial.updatedAt);
@@ -267,13 +268,8 @@ export function CardTab({ initial, preview }: { initial: SettingsDto; preview?: 
 
       <aside className="hidden w-[300px] shrink-0 lg:block lg:sticky lg:top-6">
         <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wider text-muted">Pratonton langsung</h2>
-        {preview ? (
-          preview(form)
-        ) : (
-          <div className="flex h-[560px] items-center justify-center rounded-[28px] border border-line bg-panel p-6 text-center text-[13px] text-muted">
-            Pratonton kad dipasang di sini selepas kad siap.
-          </div>
-        )}
+        <CardPreview settings={form} />
+        <p className="mt-2 text-[12px] text-muted">Pratonton mengikut borang ini, termasuk perubahan yang belum disimpan. Nama dalam senarai RSVP hanya contoh.</p>
       </aside>
     </div>
   );

@@ -41,6 +41,16 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
   jawi: { label: "Jawi/Arab", display: "Amiri", body: "Amiri" },
 };
 
+/**
+ * The accent mixed halfway to ink. Accent-coloured text and filled buttons use
+ * this: the raw accent alone does not reach WCAG contrast on the light presets,
+ * while ink always contrasts with bg, so the mix lifts every preset over the bar.
+ */
+export function textAccent(c: ColorPreset): string {
+  const ch = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
+  return "#" + [0, 1, 2].map((i) => Math.round((ch(c.accent, i) + ch(c.ink, i)) / 2).toString(16).padStart(2, "0")).join("");
+}
+
 export const DEFAULT_COLOR_PRESET: ColorPresetKey = "blush";
 export const DEFAULT_FONT_PRESET: FontPresetKey = "classic";
 

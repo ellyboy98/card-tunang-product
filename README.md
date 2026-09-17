@@ -1,6 +1,6 @@
 # Kad Tunang
 
-Mobile-first invitation card for a Malay engagement ceremony, with a password-protected admin panel for the guest list and card content. One deployment hosts one event.
+Mobile-first invitation card for a Malay engagement ceremony (majlis pertunangan), opened from a WhatsApp link, plus a password-protected admin panel where the family edits the card and manages the guest list. One deployment hosts one event.
 
 The specification lives in `docs/` and is the source of truth. Start with `docs/01-overview.md`; `docs/08-implementation-plan.md` is the build order. Editable draw.io diagrams are in `diagrams/`.
 
@@ -15,12 +15,50 @@ docker compose exec app npm run lint
 docker compose exec app npm test
 ```
 
-Admin at http://localhost:3000/admin, password `admin`. See `docs/06-local-dev-docker.md` for the rest.
+Admin at http://localhost:3000/admin, password `admin`. Uploads go to a Compose volume and are served from `/uploads/…`. See `docs/06-local-dev-docker.md` for the rest.
+
+## Deploy
+
+Follow `docs/07-deployment.md`. Production needs four things beside the Neon and Blob integrations: `ADMIN_PASSWORD`, `ADMIN_SECRET`, `STORAGE_DRIVER=vercel-blob` and `NEXT_PUBLIC_SITE_URL`. `.env.example` lists every variable with a note on where it comes from.
+
+## Where things are
+
+| Path | What |
+|---|---|
+| `src/components/card/` | The card. One `Card` component renders the public page and the admin live preview. |
+| `src/components/admin/` | Admin UI: guest list, card form, form primitives. |
+| `src/lib/` | Browser-safe: Zod schemas, presets, Malay date/phone/map helpers, API client. |
+| `src/server/` | Server only: Drizzle schema and client, repositories, services, auth, storage. |
+| `src/app/api/` | Thin route handlers: parse, call a service, respond. |
+| `src/middleware.ts` | Denies `/admin` and `/api/admin` without the session cookie. |
 
 ## Deviations from the docs
 
-Kept here so the docs stay the spec and the reasons stay findable.
+Kept here so the docs stay the spec and the reasons stay findable. Where a doc was changed to match, it says so.
 
-- `Dockerfile.dev` runs as the image's `node` user and pre-creates the two volume mount points. The docs' three-line Dockerfile runs as root, which on Linux and WSL hosts leaves root-owned files in the bind mount. Behaviour is otherwise identical.
-- `lint` runs `eslint` directly instead of `next lint`, which Next 15.5 deprecates. Same config, same rules.
-- `@types/node` is `^22` (docs' scaffold gives `^20`) because Vitest 5 requires it and the container runs Node 22.
+**Tooling**
+
+- `Dockerfile.dev` runs as the image's `node` user and pre-creates the two volume mount points. The docs' three-line Dockerfile runs as root, which on Linux and WSL hosts leaves root-owned files in the bind mount.
+- `lint` runs `eslint` directly instead of `next lint`, which Next 15.5 deprecates. Same config.
+- `@types/node` is `^22` (the scaffold gives `^20`) because Vitest 5 requires it and the container runs Node 22.
+- Fonts are self-hosted through `next/font` instead of a Google Fonts `<link>`. The external stylesheet was render-blocking and held Lighthouse mobile Performance at 78; with `next/font` it is 90. Only the selected preset's font files download. `docs/05` updated.
+
+**Data and rules**
+
+- `guestPatch` is built from un-defaulted fields. Zod 4 applies a field's default even through `partial()`, so the docs' `guestInput.partial()` would reset every group to "Lain-lain" on a PATCH that omits it. Same shapes as `docs/04`.
+- Changing a guest's status in the admin also sets `confirmed_pax`: pax on attending, 0 on declined, null on pending, unless the patch names it. Without this the status pill left the Hadir column and the totals wrong. Lowering pax still lowers `confirmed_pax`, as documented.
+- `rsvpInput.pax` has no upper bound. `docs/08` expects `pax: 99` to be stored as the allocation, which the `max(50)` in `docs/04` made impossible; the service clamp is the single bound. `docs/04` updated.
+- Time-of-day words: pagi before 12:00, tengah hari 12:00 to 13:59, petang 14:00 to 18:59, malam from 19:00. The docs fix four examples, not the cut points.
+- The upload service also accepts `audio/mp3` as an MP3, which some Windows browsers send for `.mp3` files.
+
+**Card**
+
+- Accent-coloured text and filled buttons use the accent mixed halfway to ink (`--c-accent-text`). The raw dusty rose on blush paper is 2.4:1, below WCAG even for large text. Strokes and botanicals keep the raw accent. A test guards the ratios for all six presets. `docs/05` updated.
+- Names are split at "bin" or "binti" when rendered: given name large, patronym small beneath, as in the Figma. The admin keeps one field per name.
+- The public page passes the dropdown guests to the card as a prop instead of the card fetching `/api/guests` on load. One fewer request before the RSVP section is usable; the route still exists.
+- The 404 and error pages use the default blush and classic presets rather than the configured ones, so they can be static and never read the database at build time.
+
+**Admin**
+
+- The stats hint reads "N isi rumah" without the design's "· had 100". There is no field for a venue cap, so a fixed number would mislead.
+- Contact phone numbers are normalised on blur, so "012-345 6789" becomes "0123456789" before the digits-only rule runs.
