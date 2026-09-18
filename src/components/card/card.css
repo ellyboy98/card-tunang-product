@@ -102,6 +102,23 @@
 .card__closing { padding: 36px 0 12px; }
 .card__sprig { display: block; margin: 0 auto; }
 
+/* sections rise as they scroll into view. Driven by the scroll position, so no
+   JavaScript runs and nothing moves while the page is still. Browsers without
+   scroll-driven animations show the sections as they are. The fill is
+   `backwards`: hidden before a section enters, untouched once it has. */
+@supports (animation-timeline: view()) {
+  .card__section,
+  .card__closing {
+    animation: card-reveal linear backwards;
+    animation-timeline: view();
+    animation-range: entry 0% entry 35%;
+  }
+}
+@keyframes card-reveal {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
 /* type */
 .card__eyebrow {
   margin: 0;
@@ -457,6 +474,8 @@
   .card__cover,
   .card__cover-inner,
   .card__btn { transition: none; }
-  .card__cover-inner > * { animation: none; }
+  .card__cover-inner > *,
+  .card__section,
+  .card__closing { animation: none; }
   .card__petals { display: none; }
 }

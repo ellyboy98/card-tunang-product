@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import type { GuestOption, RsvpState } from "@/lib/types";
+import { Petals } from "./Petals";
 
 type Props = {
   guests: GuestOption[];
@@ -21,6 +23,8 @@ export function Rsvp({ guests, preview }: Props) {
   const [pax, setPax] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Result>(null);
+  const [burst, setBurst] = useState<{ id: number; root: Element } | null>(null);
+  const form = useRef<HTMLDivElement>(null);
 
   const groups = new Map<string, GuestOption[]>();
   for (const g of guests) groups.set(g.groupName, [...(groups.get(g.groupName) ?? []), g]);
@@ -59,6 +63,12 @@ export function Rsvp({ guests, preview }: Props) {
         : await api<RsvpState>("/api/rsvp", { method: "POST", json: { guestId: state.id, status, pax } });
       setState(next);
       setResult({ kind: "ok", state: next });
+      if (status === "attending") {
+        // Portalled to the card root: a fixed layer inside the section would be
+        // positioned against the section, whose scroll-driven reveal animates transform.
+        const root = form.current?.closest(".card") ?? document.body;
+        setBurst((b) => ({ id: (b?.id ?? 0) + 1, root }));
+      }
     } catch {
       setResult({ kind: "error" });
     } finally {
@@ -70,7 +80,9 @@ export function Rsvp({ guests, preview }: Props) {
   const done = result?.kind === "ok";
 
   return (
-    <div className="card__form">
+    <div ref={form} className="card__form">
+      {/* A new key restarts the burst if they confirm again. */}
+      {burst && createPortal(<Petals key={burst.id} burst />, burst.root)}
       <label className="card__label" htmlFor="rsvp-guest">
         Nama
       </label>

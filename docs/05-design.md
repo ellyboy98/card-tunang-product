@@ -14,7 +14,7 @@ Claude Code: if the Figma MCP is available, pull `get_design_context` on these n
 
 ## Direction
 
-Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash. Motion follows the same rule: one moment, when the cover lifts into a petal shower, and nothing that loops. Everything honours `prefers-reduced-motion`.
+Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash. Motion follows the same rule: a petal shower when the cover lifts and a smaller one when a guest confirms, sections rising softly as they scroll into view, and nothing that loops. Everything honours `prefers-reduced-motion`.
 
 ## Tokens
 
@@ -103,6 +103,8 @@ Full-viewport, fixed, z-index above the card. Shows eyebrow, names, date, button
 6. **Hubungi**: rows with name + relation, WhatsApp and Telefon small pills. Hidden when `contacts` is empty.
 7. **Closing**: 90 px sprig, closing text in display italic 20 px, hashtag eyebrow if set.
 
+Every section and the closing rise 18 px and fade in as they scroll into view, driven by the scroll position (`animation-timeline: view()` over the first 35 % of the section's entry), so no JavaScript runs. Browsers without scroll-driven animations show the sections as they are. The header is exempt: it is already in view when the cover lifts.
+
 Music toggle: fixed bottom-right, 44 px circle, bg fill, accent stroke, ♪ / ❚❚. Only rendered when `music_url` is set and the cover has been opened.
 
 ### Countdown
@@ -113,7 +115,7 @@ Single line: **`178`** *hari lagi*, with `14 jam · 32 minit · 07 saat` beneath
 2. On select: fetch status. Show "Jemputan untuk N orang." If already answered, show a soft notice ("Sudah disahkan: hadir, 3 orang. Anda boleh mengubahnya di bawah.").
 3. Select "Bilangan yang akan hadir": 1…N, default = `confirmed_pax ?? pax`.
 4. Buttons: **Hadir** (filled, fills half), **Tidak dapat hadir** (outlined, fills half).
-5. After submit: sage-tinted notice ("Terima kasih! Kehadiran 3 orang telah disahkan." / "Terima kasih atas maklum balas anda."), tick replaces the chevron in the name field. Buttons stay enabled so they can change their mind.
+5. After submit: sage-tinted notice ("Terima kasih! Kehadiran 3 orang telah disahkan." / "Terima kasih atas maklum balas anda."), tick replaces the chevron in the name field. Buttons stay enabled so they can change their mind. Confirming hadir also releases a smaller petal burst (14 petals, about 7 s).
 6. On network error: rose-tinted notice "Tidak dapat menghantar. Cuba lagi atau hubungi kami."
 
 ## Admin

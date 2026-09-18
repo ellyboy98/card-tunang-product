@@ -2,31 +2,30 @@
 
 import { useEffect, useState, type CSSProperties } from "react";
 
-// A one-time petal shower, released by the tap that opens the card. Each petal
-// is two elements animating transform and opacity only, so the shower stays on
-// the compositor, and the layer removes itself once the last petal has landed
-// so nothing keeps running while the guest reads. Not rendered under
-// prefers-reduced-motion.
-const COUNT = 24;
-const FALL_S = [5, 8] as const;
-const DELAY_S = [0, 3] as const;
-const SHOWER_MS = (FALL_S[1] + DELAY_S[1]) * 1000 + 250;
+// Petals fall once: the shower released by the tap that opens the card, or the
+// smaller burst for a confirmed RSVP. Each petal is two elements animating
+// transform and opacity only, so the fall stays on the compositor, and the
+// layer removes itself once the last petal has landed so nothing keeps running
+// while the guest reads. Not rendered under prefers-reduced-motion.
+type Preset = { count: number; fall: readonly [number, number]; delay: readonly [number, number] };
+const SHOWER: Preset = { count: 24, fall: [5, 8], delay: [0, 3] };
+const BURST: Preset = { count: 14, fall: [4, 6], delay: [0, 1.2] };
 
 type Petal = { id: number; tone: 0 | 1 | 2; style: CSSProperties };
 
 const between = ([min, max]: readonly [number, number]) => min + Math.random() * (max - min);
 
-function makePetals(): Petal[] {
+function makePetals({ count, fall, delay }: Preset): Petal[] {
   if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return [];
-  return Array.from({ length: COUNT }, (_, i) => ({
+  return Array.from({ length: count }, (_, i) => ({
     id: i,
     // Two accent tones, and every fifth petal a sage leaf.
     tone: i % 5 === 4 ? 2 : ((i % 2) as 0 | 1),
     style: {
       "--x": `${between([2, 96]).toFixed(1)}%`,
       "--size": `${between([9, 15]).toFixed(0)}px`,
-      "--fall": `${between(FALL_S).toFixed(2)}s`,
-      "--delay": `${between(DELAY_S).toFixed(2)}s`,
+      "--fall": `${between(fall).toFixed(2)}s`,
+      "--delay": `${between(delay).toFixed(2)}s`,
       "--sway": `${between([2.2, 3.4]).toFixed(2)}s`,
       "--drift": `${between([16, 40]).toFixed(0)}px`,
       "--turn": `${((Math.random() < 0.5 ? -1 : 1) * between([120, 300])).toFixed(0)}deg`,
@@ -34,13 +33,17 @@ function makePetals(): Petal[] {
   }));
 }
 
-export function Petals() {
-  const [petals, setPetals] = useState(makePetals);
+/** When the slowest, latest petal has left the screen. */
+const lifetimeMs = ({ fall, delay }: Preset) => (fall[1] + delay[1]) * 1000 + 250;
+
+export function Petals({ burst }: { burst?: boolean }) {
+  const preset = burst ? BURST : SHOWER;
+  const [petals, setPetals] = useState(() => makePetals(preset));
 
   useEffect(() => {
-    const t = window.setTimeout(() => setPetals([]), SHOWER_MS);
+    const t = window.setTimeout(() => setPetals([]), lifetimeMs(preset));
     return () => window.clearTimeout(t);
-  }, []);
+  }, [preset]);
 
   if (petals.length === 0) return null;
   return (
