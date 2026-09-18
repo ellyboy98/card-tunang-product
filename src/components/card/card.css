@@ -83,6 +83,7 @@
 .card--preview .card__bg,
 .card--preview .card__bg-fade,
 .card--preview .card__cover,
+.card--preview .card__petals,
 .card--preview .card__music {
   position: absolute;
 }
@@ -377,6 +378,62 @@
 .card__cover-date { margin: 0 0 18px; font-family: var(--f-display); font-weight: 500; font-size: 20px; }
 .card__cover-hint { margin: 0; font-size: 13px; opacity: 0.78; }
 
+/* cover motion: the elements rise into place on load, one after another, and
+   the whole block drifts up as the cover lifts */
+.card__cover-inner { transition: transform 0.6s ease; }
+.card__cover--open .card__cover-inner { transform: translateY(-18px); }
+.card__cover-inner > * { animation: card-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.card__cover-inner > :nth-child(2) { animation-delay: 0.1s; }
+.card__cover-inner > :nth-child(3) { animation-delay: 0.2s; }
+.card__cover-inner > :nth-child(4) { animation-delay: 0.3s; }
+.card__cover-inner > :nth-child(5) { animation-delay: 0.4s; }
+.card__cover-inner > :nth-child(6) { animation-delay: 0.5s; }
+@keyframes card-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* petal shower (Petals.tsx), released by the tap that opens the card. Each
+   petal is a full-height strip that falls by its own height, so the same
+   keyframes work in the viewport and inside the scaled admin frame, with the
+   petal shape inside it swaying and turning. Transform and opacity only. */
+.card__petals {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+}
+.card__petal {
+  position: absolute;
+  top: 0;
+  left: var(--x);
+  width: var(--size);
+  height: 100%;
+  animation: card-petal-fall var(--fall) linear var(--delay) both;
+}
+.card__petal-shape {
+  display: block;
+  width: var(--size);
+  height: calc(var(--size) * 1.3);
+  border-radius: 0 100% 100% 100%;
+  background: var(--c-accent);
+  opacity: 0.9;
+  animation: card-petal-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+}
+.card__petal--1 .card__petal-shape { opacity: 0.55; }
+.card__petal--2 .card__petal-shape { border-radius: 100% 0; background: var(--c-leaf); opacity: 0.75; }
+@keyframes card-petal-fall {
+  0% { transform: translateY(-6%); opacity: 0; }
+  6% { opacity: 1; }
+  88% { opacity: 1; }
+  100% { transform: translateY(100%); opacity: 0; }
+}
+@keyframes card-petal-sway {
+  from { transform: translateX(calc(var(--drift) * -1)) rotate(0deg); }
+  to { transform: translateX(var(--drift)) rotate(var(--turn)); }
+}
+
 /* music */
 .card__music {
   position: fixed;
@@ -398,5 +455,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .card__cover,
+  .card__cover-inner,
   .card__btn { transition: none; }
+  .card__cover-inner > * { animation: none; }
+  .card__petals { display: none; }
 }

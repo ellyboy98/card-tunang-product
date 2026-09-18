@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { MusicToggle } from "./MusicToggle";
+import { Petals } from "./Petals";
 import { Sprig } from "./Sprig";
 
 type Props = {
@@ -71,6 +72,7 @@ export function Cover({ title, names, dateLabel, musicUrl, preview }: Props) {
           </div>
         </div>
       )}
+      {open && <Petals />}
       {open && musicUrl && <MusicToggle playing={playing} onToggle={toggleMusic} />}
     </>
   );

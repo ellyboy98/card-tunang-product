@@ -14,7 +14,7 @@ Claude Code: if the Figma MCP is available, pull `get_design_context` on these n
 
 ## Direction
 
-Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash.
+Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash. Motion follows the same rule: one moment, when the cover lifts into a petal shower, and nothing that loops. Everything honours `prefers-reduced-motion`.
 
 ## Tokens
 
@@ -88,10 +88,11 @@ Build as inline SVG components so they take theme colours.
 ## Screen behaviour
 
 ### Cover
-Full-viewport, fixed, z-index above the card. Shows eyebrow, names, date, button "Buka jemputan", helper "Ketik untuk membuka". Tap:
-1. Sets `open = true`; the cover fades out over 600 ms (no transition under `prefers-reduced-motion`).
+Full-viewport, fixed, z-index above the card. Shows eyebrow, names, date, button "Buka jemputan", helper "Ketik untuk membuka". On load its elements rise 14 px into place one after another (700 ms each, 100 ms apart). Tap:
+1. Sets `open = true`; the cover fades out over 600 ms while its content drifts up 18 px (no transition under `prefers-reduced-motion`).
 2. Calls `audio.play()` if `music_url` is set. This tap is the user gesture browsers require. If play is rejected, the toggle shows the paused state; no error is shown.
 3. Body scroll is locked while the cover is visible.
+4. Releases the petal shower (`<Petals />`): 24 petals, 9–15 px, in accent at two opacities with every fifth a sage leaf, each falling for 5–8 s from a start staggered by 0–3 s, swaying and turning on the way down. A fixed layer above the cover, `pointer-events: none`, transform and opacity only; it removes itself 11 s after the tap. Not rendered under `prefers-reduced-motion`.
 
 ### Card sections (in order)
 1. **Header**: eyebrow, host parents (from `host_side`), opening text, `<Arch>` with `first_name` / `bin/binti` line / `&` / `second_name` / `bin/binti` line. Host side's child comes first.
@@ -135,4 +136,4 @@ Reordering in v1 uses ↑ ↓ buttons calling `/reorder`. The drag handle is dra
 - Selects are native `<select>`; no custom dropdowns.
 - Colour contrast: ink on bg ≥ 7:1 for every preset; accent is never used for body text.
 - No layout shift: countdown placeholder, fixed-size music button, `font-display: swap` with metric-compatible fallbacks.
-- Card JS budget: only Cover, Countdown, Rsvp, MusicToggle are client components. Everything else is server-rendered.
+- Card JS budget: only Cover, Countdown, Rsvp, MusicToggle and Petals are client components. Everything else is server-rendered.
