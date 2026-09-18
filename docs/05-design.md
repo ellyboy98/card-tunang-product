@@ -14,7 +14,7 @@ Claude Code: if the Figma MCP is available, pull `get_design_context` on these n
 
 ## Direction
 
-Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash. Motion follows the same rule: a petal shower when the cover lifts and a smaller one when a guest confirms, sections rising softly as they scroll into view, and nothing that loops. Everything honours `prefers-reduced-motion`.
+Soft floral. Blush paper, deep mulberry ink, dusty rose accent, sage botanicals. Everything quiet except one element: a botanical arch of sage leaves and rose buds framing the couple's names. Section dividers are small leaf sprigs, not rules. No cards inside cards, no shadows, no gradients apart from the background wash. Motion follows the same rule: one moment when the cover gives way to the card, a smaller one when a guest confirms, sections rising softly as they scroll into view, and nothing that loops. The admin chooses the cover transition and the petals' shape and density (see "Motion options"). Everything honours `prefers-reduced-motion`.
 
 ## Tokens
 
@@ -85,14 +85,24 @@ Build as inline SVG components so they take theme colours.
 - **Sprig** (`<Sprig width={140} />`): 1 px stem in leaf at 60 %, alternating leaf ellipses 14 × 6 rotated ±35°, one 7 px rose bud at centre. Used as every section divider and in the cover.
 - **Arch** (`<Arch />`): a thin arc (leaf at 55 %) spanning roughly 300 px wide, 11 leaves along the arc alternating tilt and opacity, rose buds at every third leaf. Names sit inside the arch. Reduced-motion safe; no animation.
 
+## Motion options
+
+Three settings, stored as `text` keys with fallbacks like the presets (`lib/presets.ts`). Every petal is inline SVG filled with the accent (leaves with the leaf colour), so they follow the colour preset.
+
+| Setting | Keys (default first) | Effect |
+|---|---|---|
+| `cover_transition` | `storm`, `soft`, `plain` | How the cover gives way. `storm`: about 70 petals blown from the left across the screen, each in 1.3–2.3 s from starts staggered over 1.1 s, the cover fading beneath them from 0.35 s to 1.25 s, the layer gone by 3.7 s. `soft`: a 600 ms fade with the gentle 24-petal shower (5–8 s falls from starts staggered over 3 s, gone by 11 s). `plain`: the 600 ms fade alone. |
+| `petal_style` | `mix`, `petal`, `blossom`, `leaf` | `mix`: rose petals with every fifth a sage leaf. `petal`: rose petals only. `blossom`: five-petal blossoms. `leaf`: sage leaves only. |
+| `petal_density` | `normal`, `sparse`, `dense` | Multiplies every petal count by 1, 0.6 or 1.6. Applies to the cover transition and the RSVP burst. |
+
 ## Screen behaviour
 
 ### Cover
 Full-viewport, fixed, z-index above the card. Shows eyebrow, names, date, button "Buka jemputan", helper "Ketik untuk membuka". On load its elements rise 14 px into place one after another (700 ms each, 100 ms apart). Tap:
-1. Sets `open = true`; the cover fades out over 600 ms while its content drifts up 18 px (no transition under `prefers-reduced-motion`).
+1. Sets `open = true`; the cover fades out over 600 ms while its content drifts up 18 px. For `storm` the fade waits 350 ms and takes 900 ms, so the petals thicken first. No transition under `prefers-reduced-motion`.
 2. Calls `audio.play()` if `music_url` is set. This tap is the user gesture browsers require. If play is rejected, the toggle shows the paused state; no error is shown.
 3. Body scroll is locked while the cover is visible.
-4. Releases the petal shower (`<Petals />`): 24 petals, 9–15 px, in accent at two opacities with every fifth a sage leaf, each falling for 5–8 s from a start staggered by 0–3 s, swaying and turning on the way down. A fixed layer above the cover, `pointer-events: none`, transform and opacity only; it removes itself 11 s after the tap. Not rendered under `prefers-reduced-motion`.
+4. Releases the petals for the chosen `cover_transition` (`<Petals mode>`, see "Motion options"): 9–15 px in the shower, 8–18 px in the storm, at two alternating opacities, swaying (or, in the storm, blown) and turning on the way down. A fixed layer above the cover, `pointer-events: none`, transform and opacity only; it removes itself once the last petal has left. Nothing for `plain` or under `prefers-reduced-motion`.
 
 ### Card sections (in order)
 1. **Header**: eyebrow, host parents (from `host_side`), opening text, `<Arch>` with `first_name` / `bin/binti` line / `&` / `second_name` / `bin/binti` line. Host side's child comes first.
@@ -115,7 +125,7 @@ Single line: **`178`** *hari lagi*, with `14 jam · 32 minit · 07 saat` beneath
 2. On select: fetch status. Show "Jemputan untuk N orang." If already answered, show a soft notice ("Sudah disahkan: hadir, 3 orang. Anda boleh mengubahnya di bawah.").
 3. Select "Bilangan yang akan hadir": 1…N, default = `confirmed_pax ?? pax`.
 4. Buttons: **Hadir** (filled, fills half), **Tidak dapat hadir** (outlined, fills half).
-5. After submit: sage-tinted notice ("Terima kasih! Kehadiran 3 orang telah disahkan." / "Terima kasih atas maklum balas anda."), tick replaces the chevron in the name field. Buttons stay enabled so they can change their mind. Confirming hadir also releases a smaller petal burst (14 petals, about 7 s).
+5. After submit: sage-tinted notice ("Terima kasih! Kehadiran 3 orang telah disahkan." / "Terima kasih atas maklum balas anda."), tick replaces the chevron in the name field. Buttons stay enabled so they can change their mind. Confirming hadir also releases a smaller petal burst (14 petals × density, in the chosen style, about 7 s).
 6. On network error: rose-tinted notice "Tidak dapat menghantar. Cuba lagi atau hubungi kami."
 
 ## Admin
@@ -128,7 +138,7 @@ Tokens: bg `#F7F5F2`, panel `#FFFFFF`, line `#E6DEDB`, muted `#7F737A`, ink `#4B
 Header (couple name in display italic + "· admin", buttons Lihat kad ↗ and Log keluar) → tabs (Tetamu | Kad, rose underline on active) → stats panel (four columns: Pax dijemput with "N isi rumah · had 100" hint, Hadir in success colour, Tidak hadir, Belum jawab) → Tambah tetamu panel (Nama 2fr, Kumpulan with datalist 1fr, Pax 80 px, Tambah primary) → Senarai tetamu panel: header with Muat turun CSV; table columns Nama · Kumpulan · Pax · Status · Hadir · actions. Name is click-to-edit. Kumpulan and Pax are inline inputs saving on blur. Status is a pill-styled select (grey pending, sage attending, rose declined). Actions: ↑ ↓ (reorder within group), Sembunyi/Tunjuk, Padam (confirm dialog). Hidden rows at 50 % opacity with "(disembunyi)".
 
 ### Kad tab
-Two columns: form (fills) and a 300 px "Pratonton langsung" column on the right that renders `<Card>` scaled to 300/390 with rounded corners, updating on every keystroke from unsaved form state. Panels in order: Pasangan (title, host side, names, parents, opening text), Tarikh dan tempat (start, end, venue name, address, coordinates paste box with the recognised lat/lng echoed in success colour or a muted "Butang peta akan disembunyikan" warning), Atur cara majlis (rows: ⋮⋮ handle · time input 150 px · label input fills · ×; "Tambah baris"), Hubungi (same row editor: name, relation, phone), Rupa kad (font select, colour select + swatch row, two upload zones with dashed border showing current file and Tukar · Buang), RSVP (checkbox "Benarkan tetamu sahkan kehadiran melalui kad"). Sticky bottom bar: Simpan perubahan (primary) + "Disimpan N minit lalu" / validation summary.
+Two columns: form (fills) and a 300 px "Pratonton langsung" column on the right that renders `<Card>` scaled to 300/390 with rounded corners, updating on every keystroke from unsaved form state. Panels in order: Pasangan (title, host side, names, parents, opening text), Tarikh dan tempat (start, end, venue name, address, coordinates paste box with the recognised lat/lng echoed in success colour or a muted "Butang peta akan disembunyikan" warning), Atur cara majlis (rows: ⋮⋮ handle · time input 150 px · label input fills · ×; "Tambah baris"), Hubungi (same row editor: name, relation, phone), Rupa kad (font select, colour select + swatch row, two upload zones with dashed border showing current file and Tukar · Buang), Animasi (three selects: Peralihan kulit kad, Bentuk kelopak, Kepadatan kelopak, with the transition's hint beneath), RSVP (checkbox "Benarkan tetamu sahkan kehadiran melalui kad"). The preview column has an "Ulang pratonton" button that remounts the card so the cover transition can be watched again. Sticky bottom bar: Simpan perubahan (primary) + "Disimpan N minit lalu" / validation summary.
 
 Reordering in v1 uses ↑ ↓ buttons calling `/reorder`. The drag handle is drawn but inert; wire drag-and-drop only if asked.
 

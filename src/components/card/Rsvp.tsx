@@ -4,10 +4,11 @@ import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { api } from "@/lib/api";
 import type { GuestOption, RsvpState } from "@/lib/types";
-import { Petals } from "./Petals";
+import { Petals, type PetalOptions } from "./Petals";
 
 type Props = {
   guests: GuestOption[];
+  petals: PetalOptions;
   /** Admin preview: no network, a fixed sample state. */
   preview?: boolean;
 };
@@ -16,7 +17,7 @@ type Result = { kind: "ok"; state: RsvpState } | { kind: "error" } | null;
 
 const PREVIEW_STATE: Omit<RsvpState, "id" | "label"> = { pax: 4, status: "pending", confirmedPax: null };
 
-export function Rsvp({ guests, preview }: Props) {
+export function Rsvp({ guests, petals, preview }: Props) {
   const [guestId, setGuestId] = useState("");
   const [state, setState] = useState<RsvpState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -82,7 +83,7 @@ export function Rsvp({ guests, preview }: Props) {
   return (
     <div ref={form} className="card__form">
       {/* A new key restarts the burst if they confirm again. */}
-      {burst && createPortal(<Petals key={burst.id} burst />, burst.root)}
+      {burst && createPortal(<Petals key={burst.id} mode="burst" options={petals} />, burst.root)}
       <label className="card__label" htmlFor="rsvp-guest">
         Nama
       </label>

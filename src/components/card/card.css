@@ -399,6 +399,9 @@
    the whole block drifts up as the cover lifts */
 .card__cover-inner { transition: transform 0.6s ease; }
 .card__cover--open .card__cover-inner { transform: translateY(-18px); }
+/* the storm transition: the petals get 350 ms to thicken, then a slower fade */
+.card__cover--storm,
+.card__cover--storm .card__cover-inner { transition-duration: 0.9s; transition-delay: 0.35s; }
 .card__cover-inner > * { animation: card-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
 .card__cover-inner > :nth-child(2) { animation-delay: 0.1s; }
 .card__cover-inner > :nth-child(3) { animation-delay: 0.2s; }
@@ -410,16 +413,19 @@
   to { opacity: 1; transform: none; }
 }
 
-/* petal shower (Petals.tsx), released by the tap that opens the card. Each
-   petal is a full-height strip that falls by its own height, so the same
-   keyframes work in the viewport and inside the scaled admin frame, with the
-   petal shape inside it swaying and turning. Transform and opacity only. */
+/* petals (Petals.tsx): the shower or storm released by the tap that opens the
+   card, and the burst for a confirmed RSVP. Each petal is a full-height strip
+   that falls by its own height, so the same keyframes work in the viewport and
+   inside the scaled admin frame, with an SVG shape inside it that sways and
+   turns. Transform and opacity only. The layer is a size container so the
+   storm's wind can be a share of its width (cqw). */
 .card__petals {
   position: fixed;
   inset: 0;
   z-index: 40;
   overflow: hidden;
   pointer-events: none;
+  container-type: size;
 }
 .card__petal {
   position: absolute;
@@ -427,19 +433,23 @@
   left: var(--x);
   width: var(--size);
   height: 100%;
+  color: var(--c-accent);
   animation: card-petal-fall var(--fall) linear var(--delay) both;
 }
+.card__petal--leaf { color: var(--c-leaf); }
 .card__petal-shape {
   display: block;
   width: var(--size);
   height: calc(var(--size) * 1.3);
-  border-radius: 0 100% 100% 100%;
-  background: var(--c-accent);
-  opacity: 0.9;
+  fill: currentColor;
+  opacity: var(--o);
   animation: card-petal-sway var(--sway) ease-in-out var(--delay) infinite alternate;
 }
-.card__petal--1 .card__petal-shape { opacity: 0.55; }
-.card__petal--2 .card__petal-shape { border-radius: 100% 0; background: var(--c-leaf); opacity: 0.75; }
+.card__petal-shape--leaf { width: calc(var(--size) * 1.6); height: calc(var(--size) * 0.75); }
+.card__petal-shape--blossom { width: calc(var(--size) * 1.15); height: calc(var(--size) * 1.15); }
+.card__petal-eye { fill: var(--c-bg); opacity: 0.85; }
+/* the storm: blown across the layer while it falls, no sway */
+.card__petals--storm .card__petal-shape { animation: card-petal-gust var(--fall) linear var(--delay) both; }
 @keyframes card-petal-fall {
   0% { transform: translateY(-6%); opacity: 0; }
   6% { opacity: 1; }
@@ -449,6 +459,10 @@
 @keyframes card-petal-sway {
   from { transform: translateX(calc(var(--drift) * -1)) rotate(0deg); }
   to { transform: translateX(var(--drift)) rotate(var(--turn)); }
+}
+@keyframes card-petal-gust {
+  from { transform: translateX(0) rotate(0deg); }
+  to { transform: translateX(var(--wind)) rotate(var(--turn)); }
 }
 
 /* music */

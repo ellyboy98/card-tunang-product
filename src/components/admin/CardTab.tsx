@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatDateMs, fromKlLocalInput, parseLatLng, toKlLocalInput } from "@/lib/format";
-import { COLOR_PRESET_KEYS, COLOR_PRESETS, FONT_PRESET_KEYS, FONT_PRESETS } from "@/lib/presets";
+import { COLOR_PRESET_KEYS, COLOR_PRESETS, COVER_TRANSITION_KEYS, COVER_TRANSITIONS, FONT_PRESET_KEYS, FONT_PRESETS, PETAL_DENSITIES, PETAL_DENSITY_KEYS, PETAL_STYLE_KEYS, PETAL_STYLES } from "@/lib/presets";
 import type { SettingsDto } from "@/lib/types";
 import { issueMap, settingsInput, type Contact, type ScheduleItem, type SettingsInput } from "@/lib/validation";
 import { CardPreview } from "./CardPreview";
@@ -25,6 +25,8 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
+  // Bumping the key remounts the preview so the cover transition can be watched again.
+  const [replay, setReplay] = useState(0);
   const [coordText, setCoordText] = useState(initial.venueLat != null && initial.venueLng != null ? `${initial.venueLat}, ${initial.venueLng}` : "");
 
   const setMany = (patch: Partial<SettingsInput>) => {
@@ -246,6 +248,39 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
           </div>
         </Panel>
 
+        <Panel title="Animasi">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Field label="Peralihan kulit kad" htmlFor="coverTransition" hint={COVER_TRANSITIONS[form.coverTransition].hint}>
+              <Select id="coverTransition" value={form.coverTransition} onChange={(e) => set("coverTransition", e.target.value as SettingsInput["coverTransition"])}>
+                {COVER_TRANSITION_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {COVER_TRANSITIONS[k].label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Bentuk kelopak" htmlFor="petalStyle" hint="Mengikut warna tema yang dipilih.">
+              <Select id="petalStyle" value={form.petalStyle} onChange={(e) => set("petalStyle", e.target.value as SettingsInput["petalStyle"])}>
+                {PETAL_STYLE_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {PETAL_STYLES[k].label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Kepadatan kelopak" htmlFor="petalDensity" hint="Untuk peralihan kulit dan pengesahan kehadiran.">
+              <Select id="petalDensity" value={form.petalDensity} onChange={(e) => set("petalDensity", e.target.value as SettingsInput["petalDensity"])}>
+                {PETAL_DENSITY_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {PETAL_DENSITIES[k].label}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+          <p className="mt-3 text-[12px] text-muted">Klik “Ulang pratonton” di sebelah untuk menonton peralihan semula. Tetamu yang memilih “kurangkan gerakan” pada telefon mereka tidak akan melihat animasi ini.</p>
+        </Panel>
+
         <Panel title="RSVP">
           <label className="flex items-start gap-3 text-[14px]">
             <input type="checkbox" className="mt-0.5 h-4 w-4 accent-ink" checked={form.isRsvpEnabled} onChange={(e) => set("isRsvpEnabled", e.target.checked)} />
@@ -267,8 +302,13 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
       </div>
 
       <aside className="hidden w-[300px] shrink-0 lg:block lg:sticky lg:top-6">
-        <h2 className="mb-2 text-[13px] font-semibold uppercase tracking-wider text-muted">Pratonton langsung</h2>
-        <CardPreview settings={form} />
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted">Pratonton langsung</h2>
+          <Button size="sm" onClick={() => setReplay((n) => n + 1)} title="Pasang semula kad untuk menonton peralihan kulit">
+            Ulang pratonton
+          </Button>
+        </div>
+        <CardPreview key={replay} settings={form} />
         <p className="mt-2 text-[12px] text-muted">Pratonton mengikut borang ini, termasuk perubahan yang belum disimpan. Nama dalam senarai RSVP hanya contoh.</p>
       </aside>
     </div>

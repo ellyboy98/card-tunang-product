@@ -10,6 +10,7 @@ import { Arch } from "./Arch";
 import { Countdown } from "./Countdown";
 import { Cover } from "./Cover";
 import { CARD_FONTS } from "./fonts";
+import type { PetalOptions } from "./Petals";
 import { Rsvp } from "./Rsvp";
 import { Sprig } from "./Sprig";
 
@@ -80,6 +81,7 @@ export function Card({ settings: s, guests, preview }: Props) {
   const hasMap = s.venueLat != null && s.venueLng != null;
   const showRsvp = s.isRsvpEnabled && (guests.length > 0 || Boolean(preview));
   const coupleLabel = [first, second].filter(Boolean).join(" & ");
+  const petals: PetalOptions = { style: s.petalStyle, density: s.petalDensity };
 
   const sections: ReactNode[] = [];
 
@@ -152,7 +154,7 @@ export function Card({ settings: s, guests, preview }: Props) {
       <section key="kehadiran" className="card__section">
         <h2 className="card__heading">Kehadiran</h2>
         <p className="card__body">Pilih nama anda dan sahkan kehadiran.</p>
-        <Rsvp guests={guests} preview={preview} />
+        <Rsvp guests={guests} petals={petals} preview={preview} />
       </section>,
     );
   }
@@ -197,7 +199,7 @@ export function Card({ settings: s, guests, preview }: Props) {
         <span className="card__blob card__blob--c" />
       </div>
 
-      <Cover title={s.title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekdayMs(start)}, ${formatDateMs(start)}` : null} musicUrl={s.musicUrl} preview={preview} />
+      <Cover title={s.title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekdayMs(start)}, ${formatDateMs(start)}` : null} musicUrl={s.musicUrl} transition={s.coverTransition} petals={petals} preview={preview} />
 
       <main className="card__page">
         <header className="card__header">

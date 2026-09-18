@@ -1,5 +1,5 @@
-// Font and colour presets for the card (docs/05-design.md). The card reads
-// everything through CSS variables, so a preset swap needs no rebuild.
+// Font, colour and motion presets for the card (docs/05-design.md). The card
+// reads fonts and colours through CSS variables, so a preset swap needs no rebuild.
 
 export const COLOR_PRESET_KEYS = ["blush", "sage", "ivory", "navy", "emerald", "plum"] as const;
 export type ColorPresetKey = (typeof COLOR_PRESET_KEYS)[number];
@@ -54,20 +54,46 @@ export function textAccent(c: ColorPreset): string {
 export const DEFAULT_COLOR_PRESET: ColorPresetKey = "blush";
 export const DEFAULT_FONT_PRESET: FontPresetKey = "classic";
 
-function isColorKey(key: string): key is ColorPresetKey {
-  return (COLOR_PRESET_KEYS as readonly string[]).includes(key);
-}
-function isFontKey(key: string): key is FontPresetKey {
-  return (FONT_PRESET_KEYS as readonly string[]).includes(key);
-}
+// Motion (docs/05 "Motion options"): how the cover gives way, and what falls.
+export const COVER_TRANSITION_KEYS = ["storm", "soft", "plain"] as const;
+export type CoverTransitionKey = (typeof COVER_TRANSITION_KEYS)[number];
+export const COVER_TRANSITIONS: Record<CoverTransitionKey, { label: string; hint: string }> = {
+  storm: { label: "Ribut kelopak", hint: "Kelopak menyerbu skrin dan kulit kad pudar di sebaliknya." },
+  soft: { label: "Pudar dengan taburan lembut", hint: "Kulit kad pudar sambil kelopak berguguran perlahan." },
+  plain: { label: "Pudar sahaja", hint: "Tanpa kelopak." },
+};
+
+export const PETAL_STYLE_KEYS = ["mix", "petal", "blossom", "leaf"] as const;
+export type PetalStyleKey = (typeof PETAL_STYLE_KEYS)[number];
+export const PETAL_STYLES: Record<PetalStyleKey, { label: string }> = {
+  mix: { label: "Kelopak dan daun" },
+  petal: { label: "Kelopak mawar" },
+  blossom: { label: "Bunga kecil" },
+  leaf: { label: "Daun sage" },
+};
+
+export const PETAL_DENSITY_KEYS = ["sparse", "normal", "dense"] as const;
+export type PetalDensityKey = (typeof PETAL_DENSITY_KEYS)[number];
+/** `factor` multiplies every petal count. */
+export const PETAL_DENSITIES: Record<PetalDensityKey, { label: string; factor: number }> = {
+  sparse: { label: "Sedikit", factor: 0.6 },
+  normal: { label: "Sederhana", factor: 1 },
+  dense: { label: "Lebat", factor: 1.6 },
+};
+
+export const DEFAULT_COVER_TRANSITION: CoverTransitionKey = "storm";
+export const DEFAULT_PETAL_STYLE: PetalStyleKey = "mix";
+export const DEFAULT_PETAL_DENSITY: PetalDensityKey = "normal";
 
 /** Unknown keys fall back to the default so a stale row never breaks the card. */
-export function colorPresetKey(key: string): ColorPresetKey {
-  return isColorKey(key) ? key : DEFAULT_COLOR_PRESET;
+function known<K extends string>(keys: readonly K[], key: string, fallback: K): K {
+  return (keys as readonly string[]).includes(key) ? (key as K) : fallback;
 }
-export function fontPresetKey(key: string): FontPresetKey {
-  return isFontKey(key) ? key : DEFAULT_FONT_PRESET;
-}
+export const colorPresetKey = (key: string): ColorPresetKey => known(COLOR_PRESET_KEYS, key, DEFAULT_COLOR_PRESET);
+export const fontPresetKey = (key: string): FontPresetKey => known(FONT_PRESET_KEYS, key, DEFAULT_FONT_PRESET);
+export const coverTransitionKey = (key: string): CoverTransitionKey => known(COVER_TRANSITION_KEYS, key, DEFAULT_COVER_TRANSITION);
+export const petalStyleKey = (key: string): PetalStyleKey => known(PETAL_STYLE_KEYS, key, DEFAULT_PETAL_STYLE);
+export const petalDensityKey = (key: string): PetalDensityKey => known(PETAL_DENSITY_KEYS, key, DEFAULT_PETAL_DENSITY);
 export function colorPreset(key: string): ColorPreset {
   return COLOR_PRESETS[colorPresetKey(key)];
 }
