@@ -1,5 +1,6 @@
-// Font, colour and motion presets for the card (docs/05-design.md). The card
-// reads fonts and colours through CSS variables, so a preset swap needs no rebuild.
+// Font, colour, floral and motion presets for the card (docs/05-design.md). The
+// card reads fonts and colours through CSS variables, so a preset swap needs no
+// rebuild. Adding an option anywhere is one entry in this file.
 
 export const COLOR_PRESET_KEYS = ["blush", "sage", "ivory", "navy", "emerald", "plum"] as const;
 export type ColorPresetKey = (typeof COLOR_PRESET_KEYS)[number];
@@ -46,44 +47,70 @@ export const FONT_PRESETS: Record<FontPresetKey, FontPreset> = {
  * this: the raw accent alone does not reach WCAG contrast on the light presets,
  * while ink always contrasts with bg, so the mix lifts every preset over the bar.
  */
-export function textAccent(c: ColorPreset): string {
+export function textAccent(c: Pick<ColorPreset, "accent" | "ink">): string {
   const ch = (hex: string, i: number) => parseInt(hex.slice(1 + i * 2, 3 + i * 2), 16);
   return "#" + [0, 1, 2].map((i) => Math.round((ch(c.accent, i) + ch(c.ink, i)) / 2).toString(16).padStart(2, "0")).join("");
 }
 
+// Floral themes (docs/05 "Floral themes"): the cover composition, the card's
+// corner clusters and the divider colour. Independent of colour and font.
+export const FLORAL_PRESET_KEYS = ["peony_corners", "evening_garden", "wreath", "wisteria", "songket", "line_art", "watercolor"] as const;
+export type FloralPresetKey = (typeof FLORAL_PRESET_KEYS)[number];
+
+export type FloralPreset = {
+  label: string;
+  /** Colour of the sprig dividers and the arch, so they match the composition. */
+  leaf: string;
+  /** Text colours the theme forces, regardless of the colour preset. Only the dark garden. */
+  forces?: Pick<ColorPreset, "bg" | "ink" | "accent" | "soft">;
+};
+
+export const FLORAL_PRESETS: Record<FloralPresetKey, FloralPreset> = {
+  peony_corners: { label: "Peony di penjuru", leaf: "#9DB19A" },
+  evening_garden: { label: "Malam taman", leaf: "#8FA48B", forces: { bg: "#2B1A22", ink: "#F6EAE4", accent: "#E7B4B6", soft: "#6B4657" } },
+  wreath: { label: "Kalungan bunga", leaf: "#9DB19A" },
+  wisteria: { label: "Tirai wisteria", leaf: "#8C9B84" },
+  songket: { label: "Songket", leaf: "#C9A46A" },
+  line_art: { label: "Lukisan garis", leaf: "#7C9279" },
+  watercolor: { label: "Cat air", leaf: "#9DB19A" },
+};
+
+// Entrance variants (docs/05 "Entrance variants"). `envelope` and `bloom` are
+// Phase 6 and not listed until they ship, so the admin cannot pick them.
+export const ENTRANCE_PRESET_KEYS = ["petal_fall", "curtain", "slide_up", "slide_left", "fade"] as const;
+export type EntrancePresetKey = (typeof ENTRANCE_PRESET_KEYS)[number];
+export const ENTRANCE_PRESETS: Record<EntrancePresetKey, { label: string; hint: string }> = {
+  petal_fall: { label: "Hujan bunga", hint: "Kulit kad pudar sambil kelopak berguguran; bunga di penjuru bertaburan dan tumbuh semula pada kad." },
+  curtain: { label: "Tirai", hint: "Kulit kad terbelah dua dan terbuka ke atas dan ke bawah." },
+  slide_up: { label: "Luncur ke atas", hint: "Kulit kad terangkat ke atas; kad naik dari bawah." },
+  slide_left: { label: "Luncur ke kiri", hint: "Kulit kad meluncur ke kiri seperti membuka halaman." },
+  fade: { label: "Pudar", hint: "Kulit kad pudar sahaja. Paling ringan untuk telefon lama." },
+};
+
+export const WIND_PRESET_KEYS = ["off", "gentle", "breezy"] as const;
+export type WindPresetKey = (typeof WIND_PRESET_KEYS)[number];
+/** `k` multiplies the sway and gust amplitudes; `gust` is the seconds between gusts; `extra` petals per gust. */
+export const WIND_PRESETS: Record<WindPresetKey, { label: string; k: number; gust: readonly [number, number] | null; extra: number }> = {
+  off: { label: "Tiada", k: 0, gust: null, extra: 0 },
+  gentle: { label: "Lembut", k: 1, gust: [9, 16], extra: 2 },
+  breezy: { label: "Berangin", k: 1.6, gust: [6, 10], extra: 3 },
+};
+
+export const REVEAL_PRESET_KEYS = ["fade_up", "slide_in", "bloom_in", "none"] as const;
+export type RevealPresetKey = (typeof REVEAL_PRESET_KEYS)[number];
+export const REVEAL_PRESETS: Record<RevealPresetKey, { label: string }> = {
+  fade_up: { label: "Naik lembut" },
+  slide_in: { label: "Luncur masuk" },
+  bloom_in: { label: "Kembang" },
+  none: { label: "Tiada" },
+};
+
 export const DEFAULT_COLOR_PRESET: ColorPresetKey = "blush";
 export const DEFAULT_FONT_PRESET: FontPresetKey = "classic";
-
-// Motion (docs/05 "Motion options"): how the cover gives way, and what falls.
-export const COVER_TRANSITION_KEYS = ["storm", "soft", "plain"] as const;
-export type CoverTransitionKey = (typeof COVER_TRANSITION_KEYS)[number];
-export const COVER_TRANSITIONS: Record<CoverTransitionKey, { label: string; hint: string }> = {
-  storm: { label: "Ribut kelopak", hint: "Kelopak menyerbu skrin dan kulit kad pudar di sebaliknya." },
-  soft: { label: "Pudar dengan taburan lembut", hint: "Kulit kad pudar sambil kelopak berguguran perlahan." },
-  plain: { label: "Pudar sahaja", hint: "Tanpa kelopak." },
-};
-
-export const PETAL_STYLE_KEYS = ["mix", "petal", "blossom", "leaf"] as const;
-export type PetalStyleKey = (typeof PETAL_STYLE_KEYS)[number];
-export const PETAL_STYLES: Record<PetalStyleKey, { label: string }> = {
-  mix: { label: "Kelopak dan daun" },
-  petal: { label: "Kelopak mawar" },
-  blossom: { label: "Bunga kecil" },
-  leaf: { label: "Daun sage" },
-};
-
-export const PETAL_DENSITY_KEYS = ["sparse", "normal", "dense"] as const;
-export type PetalDensityKey = (typeof PETAL_DENSITY_KEYS)[number];
-/** `factor` multiplies every petal count. */
-export const PETAL_DENSITIES: Record<PetalDensityKey, { label: string; factor: number }> = {
-  sparse: { label: "Sedikit", factor: 0.6 },
-  normal: { label: "Sederhana", factor: 1 },
-  dense: { label: "Lebat", factor: 1.6 },
-};
-
-export const DEFAULT_COVER_TRANSITION: CoverTransitionKey = "storm";
-export const DEFAULT_PETAL_STYLE: PetalStyleKey = "mix";
-export const DEFAULT_PETAL_DENSITY: PetalDensityKey = "normal";
+export const DEFAULT_FLORAL_PRESET: FloralPresetKey = "peony_corners";
+export const DEFAULT_ENTRANCE_PRESET: EntrancePresetKey = "petal_fall";
+export const DEFAULT_WIND_PRESET: WindPresetKey = "gentle";
+export const DEFAULT_REVEAL_PRESET: RevealPresetKey = "fade_up";
 
 /** Unknown keys fall back to the default so a stale row never breaks the card. */
 function known<K extends string>(keys: readonly K[], key: string, fallback: K): K {
@@ -91,12 +118,16 @@ function known<K extends string>(keys: readonly K[], key: string, fallback: K): 
 }
 export const colorPresetKey = (key: string): ColorPresetKey => known(COLOR_PRESET_KEYS, key, DEFAULT_COLOR_PRESET);
 export const fontPresetKey = (key: string): FontPresetKey => known(FONT_PRESET_KEYS, key, DEFAULT_FONT_PRESET);
-export const coverTransitionKey = (key: string): CoverTransitionKey => known(COVER_TRANSITION_KEYS, key, DEFAULT_COVER_TRANSITION);
-export const petalStyleKey = (key: string): PetalStyleKey => known(PETAL_STYLE_KEYS, key, DEFAULT_PETAL_STYLE);
-export const petalDensityKey = (key: string): PetalDensityKey => known(PETAL_DENSITY_KEYS, key, DEFAULT_PETAL_DENSITY);
-export function colorPreset(key: string): ColorPreset {
-  return COLOR_PRESETS[colorPresetKey(key)];
-}
-export function fontPreset(key: string): FontPreset {
-  return FONT_PRESETS[fontPresetKey(key)];
+export const floralPresetKey = (key: string): FloralPresetKey => known(FLORAL_PRESET_KEYS, key, DEFAULT_FLORAL_PRESET);
+export const entrancePresetKey = (key: string): EntrancePresetKey => known(ENTRANCE_PRESET_KEYS, key, DEFAULT_ENTRANCE_PRESET);
+export const windPresetKey = (key: string): WindPresetKey => known(WIND_PRESET_KEYS, key, DEFAULT_WIND_PRESET);
+export const revealPresetKey = (key: string): RevealPresetKey => known(REVEAL_PRESET_KEYS, key, DEFAULT_REVEAL_PRESET);
+
+export const colorPreset = (key: string): ColorPreset => COLOR_PRESETS[colorPresetKey(key)];
+
+/** The colours the card actually paints with: the colour preset, unless the floral theme forces its own. */
+export function effectiveColors(colorKey: string, floralKey: string): ColorPreset {
+  const c = colorPreset(colorKey);
+  const f = FLORAL_PRESETS[floralPresetKey(floralKey)].forces;
+  return f ? { ...c, ...f } : c;
 }

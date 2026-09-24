@@ -15,6 +15,13 @@
       "when": 1789754772856,
       "tag": "0001_motion_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1790221859963,
+      "tag": "0002_floral_and_motion_presets",
+      "breakpoints": true
     }
   ]
 }

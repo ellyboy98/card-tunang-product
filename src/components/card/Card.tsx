@@ -3,14 +3,17 @@
 import type { CSSProperties, ReactNode } from "react";
 import "./card.css";
 import { formatDateMs, formatTimeRangeMs, formatWeekdayMs, googleCalendarUrl, icsDataUrl, mapLinks, splitPatronym, telUrl, whatsappUrl } from "@/lib/format";
-import { colorPreset, fontPresetKey, textAccent } from "@/lib/presets";
+import { DEFAULT_FLORAL_PRESET, effectiveColors, FLORAL_PRESETS, floralPresetKey, fontPresetKey, textAccent } from "@/lib/presets";
 import type { GuestOption } from "@/lib/types";
 import type { SettingsInput } from "@/lib/validation";
 import { Arch } from "./Arch";
+import { CardMotion } from "./CardMotion";
 import { Countdown } from "./Countdown";
-import { Cover } from "./Cover";
+import { CoverFace } from "./Cover";
+import { coverBlooms } from "./florals";
+import { FloralClusters } from "./Florals";
 import { CARD_FONTS } from "./fonts";
-import type { PetalOptions } from "./Petals";
+import { Reveal } from "./Reveal";
 import { Rsvp } from "./Rsvp";
 import { Sprig } from "./Sprig";
 
@@ -29,8 +32,8 @@ export function coupleNames(s: CardSettings): { first: string; second: string } 
 }
 
 /** CSS variables the card theme reads. Unknown keys fall back to the defaults. */
-export function presetVars(colorKey: string, fontKey: string): CSSProperties {
-  const c = colorPreset(colorKey);
+export function presetVars(colorKey: string, fontKey: string, floralKey: string = DEFAULT_FLORAL_PRESET): CSSProperties {
+  const c = effectiveColors(colorKey, floralKey);
   const f = CARD_FONTS[fontPresetKey(fontKey)];
   return {
     "--c-bg": c.bg,
@@ -39,13 +42,14 @@ export function presetVars(colorKey: string, fontKey: string): CSSProperties {
     "--c-accent-text": textAccent(c),
     "--c-leaf": c.leaf,
     "--c-soft": c.soft,
+    "--c-floral-leaf": FLORAL_PRESETS[floralPresetKey(floralKey)].leaf,
     "--f-display": f.display,
     "--f-body": f.body,
   } as CSSProperties;
 }
 
 export function cardVars(s: CardSettings): CSSProperties {
-  return presetVars(s.colorPreset, s.fontPreset);
+  return presetVars(s.colorPreset, s.fontPreset, s.floralPreset);
 }
 
 function Name({ name, full }: { name: string; full: boolean }) {
@@ -81,7 +85,6 @@ export function Card({ settings: s, guests, preview }: Props) {
   const hasMap = s.venueLat != null && s.venueLng != null;
   const showRsvp = s.isRsvpEnabled && (guests.length > 0 || Boolean(preview));
   const coupleLabel = [first, second].filter(Boolean).join(" & ");
-  const petals: PetalOptions = { style: s.petalStyle, density: s.petalDensity };
 
   const sections: ReactNode[] = [];
 
@@ -138,7 +141,7 @@ export function Card({ settings: s, guests, preview }: Props) {
         <h2 className="card__heading">Atur cara majlis</h2>
         <ul className="card__schedule">
           {s.schedule.map((row, i) => (
-            <li key={i}>
+            <li key={i} className="card__row" style={{ "--i": i } as CSSProperties}>
               <span className="card__schedule-time">{row.time}</span>
               <span className="card__schedule-dot" aria-hidden="true" />
               <span className="card__schedule-label">{row.label}</span>
@@ -154,7 +157,7 @@ export function Card({ settings: s, guests, preview }: Props) {
       <section key="kehadiran" className="card__section">
         <h2 className="card__heading">Kehadiran</h2>
         <p className="card__body">Pilih nama anda dan sahkan kehadiran.</p>
-        <Rsvp guests={guests} petals={petals} preview={preview} />
+        <Rsvp guests={guests} preview={preview} />
       </section>,
     );
   }
@@ -165,7 +168,7 @@ export function Card({ settings: s, guests, preview }: Props) {
         <h2 className="card__heading">Hubungi</h2>
         <ul className="card__contacts">
           {s.contacts.map((c, i) => (
-            <li key={i} className="card__contact">
+            <li key={i} className="card__contact card__row" style={{ "--i": i } as CSSProperties}>
               <div>
                 <p className="card__contact-name">{c.name}</p>
                 {c.relation && <p className="card__contact-rel">{c.relation}</p>}
@@ -185,8 +188,11 @@ export function Card({ settings: s, guests, preview }: Props) {
     );
   }
 
+  const floral = floralPresetKey(s.floralPreset);
+  const cover = <CoverFace title={s.title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekdayMs(start)}, ${formatDateMs(start)}` : null} floral={floral} />;
+
   return (
-    <div className={`card${preview ? " card--preview" : ""}`} style={cardVars(s)}>
+    <CardMotion entrance={s.entrancePreset} wind={s.windPreset} floral={floral} reveal={s.revealPreset} musicUrl={s.musicUrl} preview={preview} style={cardVars(s)} cover={cover} blooms={coverBlooms(floral)}>
       {s.backgroundUrl && (
         <>
           <div className="card__bg" style={{ backgroundImage: `url("${s.backgroundUrl.replace(/"/g, "%22")}")` }} aria-hidden="true" />
@@ -199,31 +205,41 @@ export function Card({ settings: s, guests, preview }: Props) {
         <span className="card__blob card__blob--c" />
       </div>
 
-      <Cover title={s.title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekdayMs(start)}, ${formatDateMs(start)}` : null} musicUrl={s.musicUrl} transition={s.coverTransition} petals={petals} preview={preview} />
-
       <main className="card__page">
-        <header className="card__header">
-          <p className="card__eyebrow">{s.title}</p>
-          {hostParents && <p className="card__display card__parents">{hostParents}</p>}
-          {s.openingText && <p className="card__body card__opening card__muted">{s.openingText}</p>}
-          {(first || second) && (
-            <div className="card__arch-wrap">
-              <Arch />
-              <h1 className="card__names">
-                <Names first={first} second={second} full />
-              </h1>
+        <div className="card__body">
+          <header className="card__header">
+            <FloralClusters preset={floral} />
+            <div className="card__header-inner">
+              <p className="card__eyebrow">{s.title}</p>
+              {hostParents && <p className="card__display card__parents">{hostParents}</p>}
+              {s.openingText && <p className="card__body card__opening card__muted">{s.openingText}</p>}
+              {(first || second) && (
+                <div className="card__arch-wrap">
+                  <Arch />
+                  <h1 className="card__names">
+                    <Names first={first} second={second} full />
+                  </h1>
+                </div>
+              )}
             </div>
-          )}
-        </header>
+          </header>
 
-        {sections.flatMap((node, i) => [<Sprig key={`sprig-${i}`} />, node])}
+          {sections.map((node, i) => (
+            <Reveal key={i} side={i % 2 ? -1 : 1}>
+              <Sprig />
+              {node}
+            </Reveal>
+          ))}
 
-        <footer className="card__closing">
-          <Sprig width={90} />
-          {s.closingText && <p className="card__closing-text">{s.closingText}</p>}
-          {s.hashtag && <p className="card__eyebrow card__hashtag">#{s.hashtag.replace(/^#/, "")}</p>}
-        </footer>
+          <Reveal side={sections.length % 2 ? -1 : 1}>
+            <footer className="card__closing card__section">
+              <Sprig width={90} />
+              {s.closingText && <p className="card__closing-text">{s.closingText}</p>}
+              {s.hashtag && <p className="card__eyebrow card__hashtag">#{s.hashtag.replace(/^#/, "")}</p>}
+            </footer>
+          </Reveal>
+        </div>
       </main>
-    </div>
+    </CardMotion>
   );
 }

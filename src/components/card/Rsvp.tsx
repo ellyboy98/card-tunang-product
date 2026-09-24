@@ -1,14 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useState } from "react";
 import { api } from "@/lib/api";
 import type { GuestOption, RsvpState } from "@/lib/types";
-import { Petals, type PetalOptions } from "./Petals";
 
 type Props = {
   guests: GuestOption[];
-  petals: PetalOptions;
   /** Admin preview: no network, a fixed sample state. */
   preview?: boolean;
 };
@@ -17,15 +14,13 @@ type Result = { kind: "ok"; state: RsvpState } | { kind: "error" } | null;
 
 const PREVIEW_STATE: Omit<RsvpState, "id" | "label"> = { pax: 4, status: "pending", confirmedPax: null };
 
-export function Rsvp({ guests, petals, preview }: Props) {
+export function Rsvp({ guests, preview }: Props) {
   const [guestId, setGuestId] = useState("");
   const [state, setState] = useState<RsvpState | null>(null);
   const [loading, setLoading] = useState(false);
   const [pax, setPax] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState<Result>(null);
-  const [burst, setBurst] = useState<{ id: number; root: Element } | null>(null);
-  const form = useRef<HTMLDivElement>(null);
 
   const groups = new Map<string, GuestOption[]>();
   for (const g of guests) groups.set(g.groupName, [...(groups.get(g.groupName) ?? []), g]);
@@ -64,12 +59,6 @@ export function Rsvp({ guests, petals, preview }: Props) {
         : await api<RsvpState>("/api/rsvp", { method: "POST", json: { guestId: state.id, status, pax } });
       setState(next);
       setResult({ kind: "ok", state: next });
-      if (status === "attending") {
-        // Portalled to the card root: a fixed layer inside the section would be
-        // positioned against the section, whose scroll-driven reveal animates transform.
-        const root = form.current?.closest(".card") ?? document.body;
-        setBurst((b) => ({ id: (b?.id ?? 0) + 1, root }));
-      }
     } catch {
       setResult({ kind: "error" });
     } finally {
@@ -81,9 +70,7 @@ export function Rsvp({ guests, petals, preview }: Props) {
   const done = result?.kind === "ok";
 
   return (
-    <div ref={form} className="card__form">
-      {/* A new key restarts the burst if they confirm again. */}
-      {burst && createPortal(<Petals key={burst.id} mode="burst" options={petals} />, burst.root)}
+    <div className="card__form">
       <label className="card__label" htmlFor="rsvp-guest">
         Nama
       </label>
@@ -102,7 +89,7 @@ export function Rsvp({ guests, petals, preview }: Props) {
         </select>
         <svg className={`card__select-icon${done ? " card__select-icon--done" : ""}`} viewBox="0 0 16 16" aria-hidden="true" focusable="false">
           {done ? (
-            <path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+            <path className="card__tick-path" d="M3 8.5l3.2 3L13 4.5" pathLength={1} fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           ) : (
             <path d="M4 6.5l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
           )}

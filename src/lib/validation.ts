@@ -1,7 +1,7 @@
 // Single definition of every input shape (docs/04-api.md). Routes and admin
 // forms both import from here; never redefine a shape inline.
 import { z } from "zod";
-import { COLOR_PRESET_KEYS, COVER_TRANSITION_KEYS, FONT_PRESET_KEYS, PETAL_DENSITY_KEYS, PETAL_STYLE_KEYS } from "./presets";
+import { COLOR_PRESET_KEYS, ENTRANCE_PRESET_KEYS, FLORAL_PRESET_KEYS, FONT_PRESET_KEYS, REVEAL_PRESET_KEYS, WIND_PRESET_KEYS } from "./presets";
 
 // Field errors are shown to the admin, who reads Malay.
 z.config(z.locales.ms());
@@ -79,9 +79,10 @@ export const settingsInput = z
     backgroundUrl: z.url().nullable(),
     fontPreset: z.enum(FONT_PRESET_KEYS),
     colorPreset: z.enum(COLOR_PRESET_KEYS),
-    coverTransition: z.enum(COVER_TRANSITION_KEYS),
-    petalStyle: z.enum(PETAL_STYLE_KEYS),
-    petalDensity: z.enum(PETAL_DENSITY_KEYS),
+    floralPreset: z.enum(FLORAL_PRESET_KEYS),
+    entrancePreset: z.enum(ENTRANCE_PRESET_KEYS),
+    windPreset: z.enum(WIND_PRESET_KEYS),
+    revealPreset: z.enum(REVEAL_PRESET_KEYS),
     isRsvpEnabled: z.boolean(),
   })
   // Compared as instants, not strings: the two ISO values may carry different offsets.

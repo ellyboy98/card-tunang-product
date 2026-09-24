@@ -54,11 +54,23 @@ export function Countdown({ start }: { start: string }) {
   return (
     <div className="card__countdown">
       <p className="card__countdown-main">
-        <span className="card__countdown-num">{days}</span> <span className="card__countdown-unit">hari lagi</span>
+        <span className="card__countdown-num">
+          <Tick value={String(days)} />
+        </span>{" "}
+        <span className="card__countdown-unit">hari lagi</span>
       </p>
       <p className="card__countdown-sub">
-        {hours} jam · {pad2(minutes)} minit · {pad2(seconds)} saat
+        <Tick value={String(hours)} /> jam · <Tick value={pad2(minutes)} /> minit · <Tick value={pad2(seconds)} /> saat
       </p>
     </div>
+  );
+}
+
+// A new key remounts the span, so the digit fades in; the width is fixed by CSS so nothing shifts.
+function Tick({ value }: { value: string }) {
+  return (
+    <span key={value} className="card__tick" style={{ minWidth: `${value.length}ch` }}>
+      {value}
+    </span>
   );
 }

@@ -4,7 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { api, errorMessage } from "@/lib/api";
 import { formatDateMs, fromKlLocalInput, parseLatLng, toKlLocalInput } from "@/lib/format";
-import { COLOR_PRESET_KEYS, COLOR_PRESETS, COVER_TRANSITION_KEYS, COVER_TRANSITIONS, FONT_PRESET_KEYS, FONT_PRESETS, PETAL_DENSITIES, PETAL_DENSITY_KEYS, PETAL_STYLE_KEYS, PETAL_STYLES } from "@/lib/presets";
+import { FloralThumb } from "@/components/card/Florals";
+import { COLOR_PRESET_KEYS, COLOR_PRESETS, ENTRANCE_PRESET_KEYS, ENTRANCE_PRESETS, FLORAL_PRESET_KEYS, FLORAL_PRESETS, FONT_PRESET_KEYS, FONT_PRESETS, REVEAL_PRESET_KEYS, REVEAL_PRESETS, WIND_PRESET_KEYS, WIND_PRESETS } from "@/lib/presets";
 import type { SettingsDto } from "@/lib/types";
 import { issueMap, settingsInput, type Contact, type ScheduleItem, type SettingsInput } from "@/lib/validation";
 import { CardPreview } from "./CardPreview";
@@ -25,7 +26,7 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [saveError, setSaveError] = useState<string | null>(null);
-  // Bumping the key remounts the preview so the cover transition can be watched again.
+  // Bumping the key remounts the preview so the entrance can be watched again.
   const [replay, setReplay] = useState(0);
   const [coordText, setCoordText] = useState(initial.venueLat != null && initial.venueLng != null ? `${initial.venueLat}, ${initial.venueLng}` : "");
 
@@ -243,6 +244,33 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
                 })}
               </div>
             </Field>
+            <Field label="Bunga" htmlFor="floralPreset" className="sm:col-span-2" hint="Susunan bunga pada kulit kad dan penjuru kad. Bebas daripada pilihan warna dan fon.">
+              <Select id="floralPreset" value={form.floralPreset} onChange={(e) => set("floralPreset", e.target.value as SettingsInput["floralPreset"])}>
+                {FLORAL_PRESET_KEYS.map((k) => (
+                  <option key={k} value={k}>
+                    {FLORAL_PRESETS[k].label}
+                  </option>
+                ))}
+              </Select>
+              <div className="mt-1 flex flex-wrap gap-2">
+                {FLORAL_PRESET_KEYS.map((k) => {
+                  const active = form.floralPreset === k;
+                  return (
+                    <button
+                      key={k}
+                      type="button"
+                      aria-label={FLORAL_PRESETS[k].label}
+                      aria-pressed={active}
+                      title={FLORAL_PRESETS[k].label}
+                      onClick={() => set("floralPreset", k)}
+                      className={cx("overflow-hidden rounded-md border", active ? "border-ink ring-2 ring-accent/40" : "border-line hover:border-muted")}
+                    >
+                      <FloralThumb preset={k} width={60} />
+                    </button>
+                  );
+                })}
+              </div>
+            </Field>
             <UploadZone kind="music" label="Muzik latar" hint="MP3, maksimum 3 MB." accept="audio/mpeg,.mp3" value={form.musicUrl} onChange={(url) => set("musicUrl", url)} />
             <UploadZone kind="background" label="Gambar latar" hint="JPG, PNG atau WebP, maksimum 2 MB." accept="image/jpeg,image/png,image/webp" value={form.backgroundUrl} onChange={(url) => set("backgroundUrl", url)} />
           </div>
@@ -250,35 +278,40 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
 
         <Panel title="Animasi">
           <div className="grid gap-4 sm:grid-cols-3">
-            <Field label="Peralihan kulit kad" htmlFor="coverTransition" hint={COVER_TRANSITIONS[form.coverTransition].hint}>
-              <Select id="coverTransition" value={form.coverTransition} onChange={(e) => set("coverTransition", e.target.value as SettingsInput["coverTransition"])}>
-                {COVER_TRANSITION_KEYS.map((k) => (
+            <Field label="Pembukaan" htmlFor="entrancePreset" hint={ENTRANCE_PRESETS[form.entrancePreset].hint}>
+              <Select id="entrancePreset" value={form.entrancePreset} onChange={(e) => set("entrancePreset", e.target.value as SettingsInput["entrancePreset"])}>
+                {ENTRANCE_PRESET_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {COVER_TRANSITIONS[k].label}
+                    {ENTRANCE_PRESETS[k].label}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Bentuk kelopak" htmlFor="petalStyle" hint="Mengikut warna tema yang dipilih.">
-              <Select id="petalStyle" value={form.petalStyle} onChange={(e) => set("petalStyle", e.target.value as SettingsInput["petalStyle"])}>
-                {PETAL_STYLE_KEYS.map((k) => (
+            <Field label="Angin" htmlFor="windPreset" hint="Bunga bergoyang perlahan, dengan hembusan sekali-sekala.">
+              <Select id="windPreset" value={form.windPreset} onChange={(e) => set("windPreset", e.target.value as SettingsInput["windPreset"])}>
+                {WIND_PRESET_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {PETAL_STYLES[k].label}
+                    {WIND_PRESETS[k].label}
                   </option>
                 ))}
               </Select>
             </Field>
-            <Field label="Kepadatan kelopak" htmlFor="petalDensity" hint="Untuk peralihan kulit dan pengesahan kehadiran.">
-              <Select id="petalDensity" value={form.petalDensity} onChange={(e) => set("petalDensity", e.target.value as SettingsInput["petalDensity"])}>
-                {PETAL_DENSITY_KEYS.map((k) => (
+            <Field label="Peralihan bahagian" htmlFor="revealPreset" hint="Cara setiap bahagian muncul semasa tetamu menatal.">
+              <Select id="revealPreset" value={form.revealPreset} onChange={(e) => set("revealPreset", e.target.value as SettingsInput["revealPreset"])}>
+                {REVEAL_PRESET_KEYS.map((k) => (
                   <option key={k} value={k}>
-                    {PETAL_DENSITIES[k].label}
+                    {REVEAL_PRESETS[k].label}
                   </option>
                 ))}
               </Select>
             </Field>
           </div>
-          <p className="mt-3 text-[12px] text-muted">Klik “Ulang pratonton” di sebelah untuk menonton peralihan semula. Tetamu yang memilih “kurangkan gerakan” pada telefon mereka tidak akan melihat animasi ini.</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button onClick={() => setReplay((n) => n + 1)} title="Pasang semula kad dalam pratonton dan mainkan pembukaan yang dipilih">
+              Pratonton animasi
+            </Button>
+            <p className="text-[12px] text-muted">Pembukaan dimainkan dalam pratonton di sebelah. Tetamu yang memilih “kurangkan gerakan” pada telefon mereka melihat kad tanpa animasi.</p>
+          </div>
         </Panel>
 
         <Panel title="RSVP">
@@ -304,8 +337,8 @@ export function CardTab({ initial }: { initial: SettingsDto }) {
       <aside className="hidden w-[300px] shrink-0 lg:block lg:sticky lg:top-6">
         <div className="mb-2 flex items-center justify-between gap-2">
           <h2 className="text-[13px] font-semibold uppercase tracking-wider text-muted">Pratonton langsung</h2>
-          <Button size="sm" onClick={() => setReplay((n) => n + 1)} title="Pasang semula kad untuk menonton peralihan kulit">
-            Ulang pratonton
+          <Button size="sm" onClick={() => setReplay((n) => n + 1)} title="Pasang semula kad untuk menonton pembukaan semula">
+            Ulang
           </Button>
         </div>
         <CardPreview key={replay} settings={form} />

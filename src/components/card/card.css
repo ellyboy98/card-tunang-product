@@ -1,9 +1,20 @@
 /* Card theme (docs/05). Every colour and font is a variable set on .card by
    Card.tsx, so presets swap without a rebuild. --c-accent-text is the accent
    mixed halfway to ink: the raw accent stays for strokes and botanicals, the
-   mix carries text and button fills so every preset passes WCAG contrast. */
+   mix carries text and button fills so every preset passes WCAG contrast.
+
+   Motion is CSS keyed on the root's data attributes, which CardMotion.tsx sets:
+   data-phase (cover → opening → settling → live), data-entrance, data-floral,
+   data-wind-preset, data-reveal, plus .is-grown, .is-gust and .is-visible on
+   the reveal wrappers. State selectors wrap their attribute parts in :where()
+   so the reduced-motion block at the end can override them with plain classes. */
 
 .card {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 300ms;
+  --dur-med: 700ms;
+  --dur-slow: 1200ms;
   position: relative;
   min-height: 100dvh;
   background: var(--c-bg);
@@ -45,6 +56,28 @@
   outline: 2px solid var(--c-ink);
   outline-offset: 2px;
 }
+
+/* floral backgrounds (docs/05 "Floral themes"): the blush renditions, written
+   with the theme variables so other colour presets keep their own paper. The
+   fixed ::before paints it behind the page; the cover face paints its own copy. */
+.card::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: var(--floral-bg, var(--c-bg));
+  pointer-events: none;
+}
+.card--preview::before { position: absolute; }
+.card:where([data-floral="peony_corners"]) { --floral-bg: linear-gradient(180deg, var(--c-bg), color-mix(in srgb, var(--c-bg) 68%, var(--c-soft))); }
+.card:where([data-floral="evening_garden"]) {
+  --floral-bg: radial-gradient(ellipse 70% 45% at 50% 42%, color-mix(in srgb, #6b4657 35%, transparent), transparent 70%), radial-gradient(circle at 50% 30%, #4a3040, #2b1a22 85%);
+}
+.card:where([data-floral="wreath"]) {
+  --floral-bg: radial-gradient(ellipse 48% 32% at 50% 46%, color-mix(in srgb, var(--c-soft) 75%, transparent), transparent 72%), linear-gradient(180deg, color-mix(in srgb, var(--c-bg) 92%, white), var(--c-bg));
+}
+.card:where([data-floral="wisteria"]) { --floral-bg: linear-gradient(180deg, color-mix(in srgb, var(--c-bg) 88%, #c9a0c4), var(--c-bg) 60%); }
+.card:where([data-floral="line_art"]) { --floral-bg: radial-gradient(circle at 50% 38%, color-mix(in srgb, var(--c-bg) 88%, white), var(--c-bg) 75%); }
 
 /* layers */
 .card__bg,
@@ -97,27 +130,24 @@
   padding: 0 32px 48px;
   text-align: center;
 }
-.card__header { padding: 56px 0 40px; }
+.card__header { position: relative; padding: 56px 0 40px; }
+.card__header-inner { position: relative; z-index: 1; }
 .card__section { padding: 36px 0 44px; }
 .card__closing { padding: 36px 0 12px; }
 .card__sprig { display: block; margin: 0 auto; }
 
-/* sections rise as they scroll into view. Driven by the scroll position, so no
-   JavaScript runs and nothing moves while the page is still. Browsers without
-   scroll-driven animations show the sections as they are. The fill is
-   `backwards`: hidden before a section enters, untouched once it has. */
-@supports (animation-timeline: view()) {
-  .card__section,
-  .card__closing {
-    animation: card-reveal linear backwards;
-    animation-timeline: view();
-    animation-range: entry 0% entry 35%;
-  }
+/* the floral theme's clusters at 60 %, behind the header */
+.card__cluster {
+  position: absolute;
+  z-index: 0;
+  overflow: visible;
+  opacity: 0.9;
+  pointer-events: none;
 }
-@keyframes card-reveal {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: none; }
-}
+.card__cluster--tl { top: -10px; left: -32px; }
+.card__cluster--br { bottom: -10px; right: -32px; }
+.card__cluster--top { top: -14px; left: 50%; translate: -50% 0; }
+.card__cluster--bottom { bottom: -14px; left: 50%; translate: -50% 0; }
 
 /* type */
 .card__eyebrow {
@@ -213,6 +243,16 @@
   line-height: 1.2;
   color: var(--c-accent-text);
 }
+/* a changed digit fades in inside a fixed-width span, so nothing shifts */
+.card__tick {
+  display: inline-block;
+  text-align: center;
+  animation: card-tick-in 150ms ease-out both;
+}
+@keyframes card-tick-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 /* buttons */
 .card__btn {
@@ -228,9 +268,10 @@
   color: var(--c-ink);
   text-decoration: none;
   cursor: pointer;
-  transition: filter 0.15s;
+  transition: filter 0.15s, transform 80ms;
 }
 .card__btn:hover { filter: brightness(0.96); }
+.card__btn:active { transform: translateY(1px); }
 .card__btn:disabled { opacity: 0.6; cursor: default; }
 .card__btn--filled {
   background: var(--c-accent-text);
@@ -315,6 +356,14 @@
   color: var(--c-ink);
 }
 .card__select-icon--done { color: var(--c-accent-text); }
+.card__tick-path {
+  stroke-dasharray: 1;
+  animation: card-draw 400ms var(--ease-out) both;
+}
+@keyframes card-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
 .card__invite { margin: 18px 4px 0; font-family: var(--f-display); font-style: italic; font-weight: 500; font-size: 18px; }
 .card__notice {
   margin: 14px 0 0;
@@ -323,6 +372,11 @@
   font-size: 14px;
   line-height: 1.45;
   text-align: left;
+  animation: card-notice-in var(--dur-fast) var(--ease-out) both;
+}
+@keyframes card-notice-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
 }
 .card__notice strong { font-weight: 600; }
 .card__notice small { display: block; margin-top: 2px; font-size: 13px; opacity: 0.8; }
@@ -360,18 +414,50 @@
   position: fixed;
   inset: 0;
   z-index: 30;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 32px;
-  background: var(--c-bg);
   color: var(--c-ink);
   text-align: center;
   cursor: pointer;
   overflow: hidden;
-  transition: opacity 0.6s ease;
 }
-.card__cover--open { opacity: 0; pointer-events: none; }
+.card__cover-face {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: var(--floral-bg, var(--c-bg));
+  overflow: hidden;
+}
+.card__floral-cover {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.card__cover-decor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.card__firefly {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f3d8b0;
+  box-shadow: 0 0 10px 4px color-mix(in srgb, #f3d8b0 55%, transparent);
+}
+.card__wash {
+  position: absolute;
+  border-radius: 50%;
+  background: var(--wash);
+  filter: blur(70px);
+  opacity: 0.55;
+  translate: -50% -50%;
+}
 .card__cover-inner {
   position: relative;
   z-index: 1;
@@ -380,6 +466,13 @@
   align-items: center;
   gap: 14px;
   max-width: 326px;
+}
+.card:where([data-floral="watercolor"]) .card__cover-inner {
+  padding: 28px 24px;
+  border-radius: 18px;
+  background: color-mix(in srgb, white 28%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 .card__cover-names {
   margin: 8px 0;
@@ -394,75 +487,203 @@
 }
 .card__cover-date { margin: 0 0 18px; font-family: var(--f-display); font-weight: 500; font-size: 20px; }
 .card__cover-hint { margin: 0; font-size: 13px; opacity: 0.78; }
+/* the curtain's two halves each hold a full copy of the face */
+.card__cover-half { position: absolute; inset: 0; }
+.card__cover-half--top { clip-path: inset(0 0 50% 0); }
+.card__cover-half--bottom { clip-path: inset(50% 0 0 0); }
 
-/* cover motion: the elements rise into place on load, one after another, and
-   the whole block drifts up as the cover lifts */
-.card__cover-inner { transition: transform 0.6s ease; }
-.card__cover--open .card__cover-inner { transform: translateY(-18px); }
-/* the storm transition: the petals get 350 ms to thicken, then a slower fade */
-.card__cover--storm,
-.card__cover--storm .card__cover-inner { transition-duration: 0.9s; transition-delay: 0.35s; }
-.card__cover-inner > * { animation: card-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
-.card__cover-inner > :nth-child(2) { animation-delay: 0.1s; }
-.card__cover-inner > :nth-child(3) { animation-delay: 0.2s; }
-.card__cover-inner > :nth-child(4) { animation-delay: 0.3s; }
-.card__cover-inner > :nth-child(5) { animation-delay: 0.4s; }
-.card__cover-inner > :nth-child(6) { animation-delay: 0.5s; }
-@keyframes card-rise {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: no-preference) {
+  /* on load the cover's content rises into place, one element after another */
+  .card__cover-inner > * { animation: card-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+  .card__cover-inner > :nth-child(2) { animation-delay: 0.1s; }
+  .card__cover-inner > :nth-child(3) { animation-delay: 0.2s; }
+  .card__cover-inner > :nth-child(4) { animation-delay: 0.3s; }
+  .card__cover-inner > :nth-child(5) { animation-delay: 0.4s; }
+  @keyframes card-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to { opacity: 1; transform: none; }
+  }
+  /* the button breathes: one cheap box-shadow ring */
+  .card__cover-btn { animation: card-rise 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both, card-breath 2.5s ease-out 0.7s infinite; }
+  @keyframes card-breath {
+    from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--c-accent) 45%, transparent); }
+    to { box-shadow: 0 0 0 14px transparent; }
+  }
 }
 
-/* petals (Petals.tsx): the shower or storm released by the tap that opens the
-   card, and the burst for a confirmed RSVP. Each petal is a full-height strip
+@media (prefers-reduced-motion: no-preference) {
+  /* entrance (docs/05 "Entrance variants"): how the cover leaves, how the card
+     arrives, how the florals hand off. The phase leaves "cover" on the tap. */
+  .card__cover-half { transition: transform var(--dur-slow) var(--ease-soft) 100ms, opacity 400ms ease 900ms; }
+  .card:where([data-entrance="petal_fall"]) .card__cover { transition: opacity 700ms var(--ease-soft) 100ms; }
+  .card:where([data-entrance="fade"]) .card__cover { transition: opacity 600ms var(--ease-soft); }
+  .card:where([data-entrance="slide_up"]) .card__cover { transition: transform 900ms var(--ease-soft); box-shadow: 0 12px 24px color-mix(in srgb, black 18%, transparent); }
+  .card:where([data-entrance="slide_left"]) .card__cover { transition: transform 800ms var(--ease-soft); }
+  .card:where([data-entrance="petal_fall"]:not([data-phase="cover"])) .card__cover,
+  .card:where([data-entrance="fade"]:not([data-phase="cover"])) .card__cover { opacity: 0; pointer-events: none; }
+  .card:where([data-entrance="slide_up"]:not([data-phase="cover"])) .card__cover { transform: translateY(-100%); pointer-events: none; }
+  .card:where([data-entrance="slide_left"]:not([data-phase="cover"])) .card__cover { transform: translateX(-100%); pointer-events: none; }
+  .card:where(:not([data-phase="cover"])) .card__cover-half--top { transform: translateY(-50%); opacity: 0; }
+  .card:where(:not([data-phase="cover"])) .card__cover-half--bottom { transform: translateY(50%); opacity: 0; }
+  .card:where(:not([data-phase="cover"])) .card__cover { pointer-events: none; }
+  /* the cover's blooms scatter into petals */
+  .card:where([data-entrance="petal_fall"]:not([data-phase="cover"])) .card__cover .bloom,
+  .card:where([data-entrance="petal_fall"]:not([data-phase="cover"])) .card__cover .bud {
+    animation: card-scatter 400ms var(--ease-soft) both;
+    animation-delay: min(calc(var(--i, 0) * 12ms), 400ms);
+  }
+  @keyframes card-scatter {
+    to { transform: scale(0); opacity: 0; }
+  }
+
+  /* the card arrives */
+  .card__body { transition: opacity 900ms var(--ease-out), transform 900ms var(--ease-out); }
+  .card:where([data-entrance="petal_fall"][data-phase="cover"]) .card__body { opacity: 0; transform: scale(1.03); }
+  .card:where([data-entrance="slide_up"]) .card__body { transition-delay: 200ms; }
+  .card:where([data-entrance="slide_up"][data-phase="cover"]) .card__body { opacity: 0; transform: translateY(40px); }
+  .card:where([data-entrance="slide_left"]) .card__body { transition: transform 800ms var(--ease-soft); }
+  .card:where([data-entrance="slide_left"][data-phase="cover"]) .card__body { transform: translateX(30%); }
+
+  /* florals hand off: petal_fall regrows the clusters, curtain and slide_up fade them in with the arch */
+  .card__cluster { transition: opacity var(--dur-slow) var(--ease-out); }
+  .card:where(:is([data-entrance="curtain"], [data-entrance="slide_up"]):is([data-phase="cover"], [data-phase="opening"])) .card__cluster { opacity: 0; }
+  .card:where([data-entrance="petal_fall"]:is([data-phase="cover"], [data-phase="opening"])) .card__cluster [data-wind] { transform: scale(0); }
+  .card:where([data-entrance="petal_fall"][data-phase="settling"]) .card__cluster [data-wind] {
+    animation: card-regrow 500ms var(--ease-out) both;
+    animation-delay: min(calc(var(--i, 0) * 60ms), 900ms);
+  }
+  @keyframes card-regrow {
+    from { transform: scale(0); }
+    70% { transform: scale(1.06); }
+    to { transform: scale(1); }
+  }
+
+  /* the arch grows (docs/05 "Arch grows"), once, when the root gets .is-grown */
+  .card:where([data-phase]) .card__arch-stem { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset var(--dur-slow) var(--ease-out); }
+  .card:where([data-phase]) .card__arch-leaf { transform: scale(0); transform-box: fill-box; transform-origin: 50% 100%; }
+  .card:where([data-phase]) .card__arch-bud { transform: scale(0); transform-box: fill-box; transform-origin: 50% 50%; transition: transform 400ms var(--ease-out) 1100ms; }
+  .card:where([data-phase]) .card__names { opacity: 0; transform: translateY(12px); transition: opacity var(--dur-med) var(--ease-out) 1000ms, transform var(--dur-med) var(--ease-out) 1000ms; }
+  .card:where([data-phase]) .card__names .card__amp { opacity: 0; transition: opacity var(--dur-med) var(--ease-out) 1150ms; }
+  .card:where([data-phase]) .card__header-inner > .card__eyebrow,
+  .card:where([data-phase]) .card__parents,
+  .card:where([data-phase]) .card__opening { opacity: 0; transition: opacity var(--dur-med) var(--ease-out) 300ms; }
+  .card.is-grown .card__arch-stem { stroke-dashoffset: 0; }
+  .card.is-grown .card__arch-leaf { animation: card-pop 500ms var(--ease-out) both; animation-delay: calc(300ms + var(--i, 0) * 70ms); }
+  .card.is-grown .card__arch-bud { transform: scale(1); }
+  .card.is-grown .card__names { opacity: 1; transform: none; }
+  .card.is-grown .card__names .card__amp { opacity: 1; }
+  .card.is-grown .card__header-inner > .card__eyebrow,
+  .card.is-grown .card__parents { opacity: 1; }
+  .card.is-grown .card__opening { opacity: 0.78; }
+  @keyframes card-pop {
+    from { transform: scale(0); }
+    70% { transform: scale(1.08); }
+    to { transform: scale(1); }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* scroll reveals (docs/05 "Section transitions"): Reveal.tsx adds .is-visible */
+  .card__reveal .card__section { transition: opacity var(--dur-med) var(--ease-out), transform var(--dur-med) var(--ease-out); }
+  .card:where([data-reveal="fade_up"]) .card__reveal .card__section { opacity: 0; transform: translateY(16px); }
+  .card:where([data-reveal="slide_in"]) .card__reveal .card__section { opacity: 0; transform: translateX(calc(32px * var(--side, 1))); }
+  .card:where([data-reveal="bloom_in"]) .card__reveal .card__section { opacity: 0; transform: scale(0.96); transition-delay: 300ms; }
+  .card__reveal.is-visible .card__section { opacity: 1; transform: none; }
+  /* rows stagger in after their section */
+  .card:where([data-reveal]:not([data-reveal="none"])) .card__row > * { opacity: 0; transition: opacity 500ms var(--ease-out); transition-delay: calc(250ms + var(--i, 0) * 60ms); }
+  .card__reveal.is-visible .card__row > * { opacity: 1; }
+  /* the sprig draws: stem, then leaves from the centre out, then the bud */
+  .card:where([data-reveal]:not([data-reveal="none"])) .card__reveal .card__sprig-stem { stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 600ms var(--ease-out); }
+  .card:where([data-reveal]:not([data-reveal="none"])) .card__reveal .card__sprig-leaf { transform: scale(0); transform-box: fill-box; transform-origin: 50% 50%; }
+  .card:where([data-reveal]:not([data-reveal="none"])) .card__reveal .card__sprig-bud { transform: scale(0); transform-box: fill-box; transform-origin: 50% 50%; transition: transform 300ms var(--ease-out) 500ms; }
+  .card__reveal.is-visible .card__sprig-stem { stroke-dashoffset: 0; }
+  .card__reveal.is-visible .card__sprig-leaf { animation: card-pop 300ms var(--ease-out) both; animation-delay: calc(150ms + var(--i, 0) * 50ms); }
+  .card__reveal.is-visible .card__sprig-bud { transform: scale(1); }
+}
+
+/* wind (docs/05 "Wind"): every [data-wind] group sways around its stem, out
+   of phase with its neighbours; a gust leans them all left to right. Wind runs
+   on the cover before the tap and on the card once live, never in between.
+   Wrapped in no-preference, as docs/05 asks, so reduced motion never sways. */
+@media (prefers-reduced-motion: no-preference) {
+  [data-wind] { transform-box: fill-box; }
+  [data-wind="vine"] { --amp: calc(2.5deg * var(--wind-k, 1)); --gust-amp: calc(6deg * var(--wind-k, 1)); }
+  [data-wind="leaf"] { --amp: calc(4deg * var(--wind-k, 1)); --gust-amp: calc(9deg * var(--wind-k, 1)); }
+  [data-wind="bloom"] { --amp: calc(1.5deg * var(--wind-k, 1)); --gust-amp: calc(3deg * var(--wind-k, 1)); }
+  .card:where([data-phase="cover"]:not([data-wind-preset="off"])) .card__cover [data-wind],
+  .card:where([data-phase="live"]:not([data-wind-preset="off"])) [data-wind] {
+    animation: card-sway var(--sway-dur, 6s) var(--sway-delay, 0s) ease-in-out infinite alternate;
+  }
+  .card:where([data-phase="cover"]:not([data-wind-preset="off"])) .card__cover [data-wind="bloom"],
+  .card:where([data-phase="live"]:not([data-wind-preset="off"])) [data-wind="bloom"] {
+    animation-name: card-sway-bloom;
+  }
+  .card.is-gust:where([data-phase="cover"]:not([data-wind-preset="off"])) .card__cover [data-wind],
+  .card.is-gust:where([data-phase="live"]:not([data-wind-preset="off"])) [data-wind] {
+    animation: card-sway var(--sway-dur, 6s) var(--sway-delay, 0s) ease-in-out infinite alternate, card-gust 2.2s var(--gust-delay, 0ms) cubic-bezier(0.2, 0.7, 0.2, 1) 1;
+  }
+  .card.is-gust:where([data-phase="cover"]:not([data-wind-preset="off"])) .card__cover [data-wind="bloom"],
+  .card.is-gust:where([data-phase="live"]:not([data-wind-preset="off"])) [data-wind="bloom"] {
+    animation-name: card-sway-bloom, card-gust;
+  }
+  @keyframes card-sway {
+    from { transform: rotate(calc(var(--amp) * -1)); }
+    to { transform: rotate(var(--amp)); }
+  }
+  @keyframes card-sway-bloom {
+    from { transform: rotate(calc(var(--amp) * -1)) translateY(-1.5px); }
+    to { transform: rotate(var(--amp)) translateY(1.5px); }
+  }
+  @keyframes card-gust {
+    0% { translate: 0 0; rotate: 0deg; }
+    30% { translate: 6px 0; rotate: var(--gust-amp); }
+    60% { translate: -2px 0; rotate: calc(var(--gust-amp) * -0.35); }
+    100% { translate: 0 0; rotate: 0deg; }
+  }
+}
+
+/* petals (CardMotion.tsx): the entrance fall in front of the cover, the
+   ambient drift behind the content. Each petal is a strip as tall as the layer
    that falls by its own height, so the same keyframes work in the viewport and
-   inside the scaled admin frame, with an SVG shape inside it that sways and
-   turns. Transform and opacity only. The layer is a size container so the
-   storm's wind can be a share of its width (cqw). */
+   in the scaled admin frame; the shape inside turns, and sways when asked. */
 .card__petals {
   position: fixed;
   inset: 0;
-  z-index: 40;
   overflow: hidden;
   pointer-events: none;
-  container-type: size;
 }
+.card__petals--front { z-index: 40; }
+.card__petals--back { z-index: 0; }
 .card__petal {
   position: absolute;
-  top: 0;
   left: var(--x);
-  width: var(--size);
+  top: var(--y, -5%);
+  width: 14px;
   height: 100%;
-  color: var(--c-accent);
-  animation: card-petal-fall var(--fall) linear var(--delay) both;
+  color: var(--c-soft);
+  animation: card-petal-fall var(--dur) linear var(--delay, 0s) both;
+  will-change: transform;
 }
-.card__petal--leaf { color: var(--c-leaf); }
-.card__petal-shape {
+.card__petal--accent { color: var(--c-accent); }
+.card__petal i { display: block; }
+.card__petal svg {
   display: block;
-  width: var(--size);
-  height: calc(var(--size) * 1.3);
   fill: currentColor;
-  opacity: var(--o);
-  animation: card-petal-sway var(--sway) ease-in-out var(--delay) infinite alternate;
+  animation: card-petal-spin var(--dur) linear var(--delay, 0s) both;
 }
-.card__petal-shape--leaf { width: calc(var(--size) * 1.6); height: calc(var(--size) * 0.75); }
-.card__petal-shape--blossom { width: calc(var(--size) * 1.15); height: calc(var(--size) * 1.15); }
-.card__petal-eye { fill: var(--c-bg); opacity: 0.85; }
-/* the storm: blown across the layer while it falls, no sway */
-.card__petals--storm .card__petal-shape { animation: card-petal-gust var(--fall) linear var(--delay) both; }
+.card__petal-sway { animation: card-petal-sway 2.2s ease-in-out infinite alternate; }
 @keyframes card-petal-fall {
-  0% { transform: translateY(-6%); opacity: 0; }
-  6% { opacity: 1; }
-  88% { opacity: 1; }
-  100% { transform: translateY(100%); opacity: 0; }
+  0% { transform: translate(0, 0); opacity: 0; }
+  8% { opacity: var(--petal-o); }
+  100% { transform: translate(var(--petal-dx), 100%); opacity: 0; }
+}
+@keyframes card-petal-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(var(--petal-rot)); }
 }
 @keyframes card-petal-sway {
-  from { transform: translateX(calc(var(--drift) * -1)) rotate(0deg); }
-  to { transform: translateX(var(--drift)) rotate(var(--turn)); }
-}
-@keyframes card-petal-gust {
-  from { transform: translateX(0) rotate(0deg); }
-  to { transform: translateX(var(--wind)) rotate(var(--turn)); }
+  from { transform: translateX(-14px); }
+  to { transform: translateX(14px); }
 }
 
 /* music */
@@ -483,13 +704,21 @@
   line-height: 1;
   cursor: pointer;
 }
+.card__music--playing span { display: inline-block; animation: card-rock 1.6s ease-in-out infinite alternate; }
+@keyframes card-rock {
+  from { transform: rotate(-8deg); }
+  to { transform: rotate(8deg); }
+}
 
+/* reduced motion: every motion rule above lives in a no-preference query, so
+   here the elements are simply there; the cover fades in 200 ms and no petal falls. */
 @media (prefers-reduced-motion: reduce) {
-  .card__cover,
-  .card__cover-inner,
-  .card__btn { transition: none; }
-  .card__cover-inner > *,
-  .card__section,
-  .card__closing { animation: none; }
+  .card .card__tick,
+  .card .card__notice,
+  .card .card__tick-path,
+  .card .card__music--playing span { animation: none; }
+  .card .card__btn { transition: none; }
+  .card .card__cover { transition: opacity 200ms ease; }
+  .card:not([data-phase="cover"]) .card__cover { opacity: 0; pointer-events: none; }
   .card__petals { display: none; }
 }

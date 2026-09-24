@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { Card, coupleNames } from "@/components/card/Card";
-import { colorPreset } from "@/lib/presets";
+import { effectiveColors } from "@/lib/presets";
 import { guestsService } from "@/server/services/guests.service";
 import { settingsService } from "@/server/services/settings.service";
 
@@ -37,7 +37,7 @@ export default async function CardPage() {
   return (
     <>
       {/* Overscroll and the area outside the column take the preset colour too. */}
-      <style>{`html{background:${colorPreset(settings.colorPreset).bg}}`}</style>
+      <style>{`html{background:${effectiveColors(settings.colorPreset, settings.floralPreset).bg}}`}</style>
       <Card settings={settings} guests={guests} />
     </>
   );

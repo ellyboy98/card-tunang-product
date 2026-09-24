@@ -50,6 +50,7 @@ Kept here so the docs stay the spec and the reasons stay findable. Where a doc w
 - `rsvpInput.pax` has no upper bound. `docs/08` expects `pax: 99` to be stored as the allocation, which the `max(50)` in `docs/04` made impossible; the service clamp is the single bound. `docs/04` updated.
 - Time-of-day words: pagi before 12:00, tengah hari 12:00 to 13:59, petang 14:00 to 18:59, malam from 19:00. The docs fix four examples, not the cut points.
 - The upload service also accepts `audio/mp3` as an MP3, which some Windows browsers send for `.mp3` files.
+- Migration `0002` replaces `cover_transition`, `petal_style` and `petal_density` (an earlier motion design) with `floral_preset`, `entrance_preset`, `wind_preset` and `reveal_preset`. It drops the three columns, so run it against Neon before merging (see Deploy).
 
 **Card**
 
@@ -57,6 +58,17 @@ Kept here so the docs stay the spec and the reasons stay findable. Where a doc w
 - Names are split at "bin" or "binti" when rendered: given name large, patronym small beneath, as in the Figma. The admin keeps one field per name.
 - The public page passes the dropdown guests to the card as a prop instead of the card fetching `/api/guests` on load. One fewer request before the RSVP section is usable; the route still exists.
 - The 404 and error pages use the default blush and classic presets rather than the configured ones, so they can be static and never read the database at build time.
+
+**Florals and motion**
+
+- The seven compositions are rendered by `components/card/florals.ts` and `Florals.tsx`, a TypeScript port of `assets/gen.js` (the script that produced `assets/florals/*.svg`), not the pasted files. Same geometry and colours, about 20 KB of source instead of 500 KB of markup, and every `data-wind` group gets its sway phase and gust delay at render time, so server and client agree. `docs/05` updated.
+- Every swaying group is wrapped in a positioning `<g>` that carries the SVG `transform` attribute. A CSS `transform` animation replaces the attribute on the element it targets, so animating the placed element directly would throw every leaf to the origin.
+- The floral background recipes in `docs/05` are the blush renditions. They are written with `--c-bg` and `--c-soft` so another colour preset keeps its own paper; only `evening_garden` overrides the colours, as the doc says. `docs/05` updated.
+- Sprig dividers and the arch take the floral theme's leaf colour (`--c-floral-leaf`) so switching the floral preset changes the divider colour, as `docs/08` expects. The colour preset's `leaf` still colours the schedule dots and the sage RSVP notice.
+- `petal_fall` settles the card from `scale(1.03)` and 0 opacity, not from `blur(6px)`: the doc's own guardrails forbid `filter` animations. `docs/05` updated.
+- The petal_fall scatter releases two petals per cover bloom (the first eight) plus ten from the top edge. The doc asks for 18–24 petals plus three per bloom and, a few lines later, for at most 18 alive at once; this sits between the two.
+- `envelope` and `bloom` are Phase 6 (they need an extra SVG each). `ENTRANCE_PRESET_KEYS` lists only shipped variants, so the admin cannot save one that does not exist yet.
+- Scroll reveals hide a section until it is 20 % in view, so a browser with JavaScript disabled would not see the sections. The card needs JavaScript for the cover and RSVP anyway.
 
 **Deployment**
 
