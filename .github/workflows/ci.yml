@@ -1,0 +1,30 @@
+# Checks on every push to the two branches and on pull requests. Mirrors what
+# docs/08 asks for after each phase, plus a production build and a check that
+# the Drizzle migration folder is consistent.
+name: CI
+
+on:
+  push:
+    branches: [development, main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - name: Migrations folder is consistent
+        run: npx drizzle-kit check
+      - run: npm run build

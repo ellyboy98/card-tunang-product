@@ -4,7 +4,7 @@ Two long-lived branches. Vercel deploys both automatically once the repo is conn
 
 | Branch | Purpose | Vercel environment | URL |
 |---|---|---|---|
-| `main` | What guests see. Only receives merges from `development`. | Production | custom domain / `<project>.vercel.app` |
+| `main` | What guests see. Only receives merges from `development`; a `vX.Y.Z` tag on it triggers the release pipeline that deploys. | Production (via `release.yml`) | custom domain / `<project>.vercel.app` |
 | `development` | Day-to-day work. Every phase in `docs/08` lands here first. | Preview | `<project>-git-development-<team>.vercel.app` |
 
 Preview and Production share the same Neon database and Blob store in v1 (one event, one admin, low risk). If that ever bites, create a second Neon branch for Preview; do not build anything for it now.
@@ -16,7 +16,7 @@ Preview and Production share the same Neon database and Blob store in v1 (one ev
 3. Commit at the end of every phase at minimum; more often is fine. Each commit must pass `typecheck`, `lint`, and `test` inside the container.
 4. Push `development` after every phase so the preview URL reflects it. Tell the owner the preview URL.
 5. Merge to `main` only when the owner says so. Use `git merge --ff-only development` from `main`, or open a pull request if the owner prefers to click merge. Never rebase or force-push `main`.
-6. Tag releases on `main`: `v0.1.0` for the first deploy that goes to guests, patch bumps after.
+6. Tag releases on `main`: `v0.1.0` for the first deploy that goes to guests, patch bumps after. The tag is what deploys: pushing it starts the Release workflow (`docs/07` → Releases), which waits for the owner's approval before touching production.
 7. Never commit `.env*` files (other than `.env.example`), `node_modules`, `.next`, or anything under `public/uploads/`.
 
 ## Setup (Phase 0)
@@ -47,7 +47,7 @@ git push origin main --tags
 git switch development
 ```
 
-Vercel builds `main` and promotes it to Production on success. If the build fails, Production keeps the previous deployment; fix on `development`, merge again.
+Pushing the tag starts the Release workflow: checks, then a deploy step that waits for approval under Actions. Approve it and Vercel promotes the build to Production. If anything fails, Production keeps the previous deployment; fix on `development`, merge again, and push a new patch tag.
 
 ## Hotfix
 

@@ -19,7 +19,7 @@ Admin at http://localhost:3000/admin, password `admin`. Uploads go to a Compose 
 
 ## Deploy
 
-Live: production at https://kad-tunang.vercel.app (Vercel team LAPLACE, project `kad-tunang`, `main` branch). Pushes to `development` build previews. Follow `docs/07-deployment.md` for a fresh setup. Production needs four things beside the Neon and Blob integrations: `ADMIN_PASSWORD`, `ADMIN_SECRET`, `STORAGE_DRIVER=vercel-blob` and `NEXT_PUBLIC_SITE_URL`. `.env.example` lists every variable with a note on where it comes from. Schema changes ship as committed migrations: run `npm run db:migrate` against Neon (`docs/07` step 5) before merging one, because Preview and Production share the database and the new code selects the new columns.
+Live: production at https://kad-tunang.vercel.app (Vercel team LAPLACE, project `kad-tunang`). Pushes to `development` build previews. Production deploys only through the **Release** workflow: push a `vX.Y.Z` tag on `main`, approve the deploy step under Actions, and it applies pending migrations to Neon and deploys with the Vercel CLI (`docs/07` → Releases). Pushes to `main` alone no longer deploy. Follow `docs/07-deployment.md` for a fresh setup. Production needs four things beside the Neon and Blob integrations: `ADMIN_PASSWORD`, `ADMIN_SECRET`, `STORAGE_DRIVER=vercel-blob` and `NEXT_PUBLIC_SITE_URL`. `.env.example` lists every variable with a note on where it comes from. Schema changes ship as committed migrations: run `npm run db:migrate` against Neon (`docs/07` step 5) before merging one, because Preview and Production share the database and the new code selects the new columns.
 
 ## Where things are
 
