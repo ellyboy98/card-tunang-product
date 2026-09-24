@@ -33,6 +33,7 @@ export const settings = pgTable(
   {
     id: integer("id").primaryKey().default(1),
     title: text("title").notNull().default("Majlis Pertunangan"),
+    titleEn: text("title_en").notNull().default(""),
     brideName: text("bride_name").notNull().default(""),
     groomName: text("groom_name").notNull().default(""),
     brideParents: text("bride_parents").notNull().default(""),
@@ -41,7 +42,9 @@ export const settings = pgTable(
     openingText: text("opening_text")
       .notNull()
       .default("Dengan penuh kesyukuran ke hadrat Ilahi, kami mempersilakan tuan/puan ke majlis pertunangan anakanda kami"),
+    openingTextEn: text("opening_text_en").notNull().default(""),
     closingText: text("closing_text").notNull().default("Kehadiran dan doa restu tuan/puan amat kami hargai."),
+    closingTextEn: text("closing_text_en").notNull().default(""),
     hashtag: text("hashtag"),
     eventStartAt: timestamp("event_start_at", { withTimezone: true }),
     eventEndAt: timestamp("event_end_at", { withTimezone: true }),
@@ -60,6 +63,7 @@ export const settings = pgTable(
     windPreset: text("wind_preset").notNull().default("gentle"),
     revealPreset: text("reveal_preset").notNull().default("fade_up"),
     isRsvpEnabled: boolean("is_rsvp_enabled").notNull().default(true),
+    defaultLanguage: text("default_language").notNull().default("ms"),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [check("settings_singleton", sql`${t.id} = 1`)],

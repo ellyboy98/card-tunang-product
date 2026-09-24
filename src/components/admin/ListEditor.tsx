@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useT } from "./i18n";
 import { Button } from "./ui";
 
 type Props<T> = {
@@ -15,6 +16,7 @@ type Props<T> = {
 
 /** Rows of small inputs with move-up, move-down and remove. Used for the schedule and the contacts. */
 export function ListEditor<T>({ items, onChange, blank, max, addLabel, emptyText, renderRow }: Props<T>) {
+  const { t } = useT();
   const update = (i: number, patch: Partial<T>) => onChange(items.map((it, k) => (k === i ? { ...it, ...patch } : it)));
   const move = (i: number, dir: -1 | 1) => {
     const j = i + dir;
@@ -36,13 +38,13 @@ export function ListEditor<T>({ items, onChange, blank, max, addLabel, emptyText
           </span>
           <div className="flex min-w-0 flex-1 flex-col gap-2 sm:flex-row">{renderRow(item, (p) => update(i, p), i)}</div>
           <div className="flex shrink-0 gap-0.5">
-            <Button size="sm" variant="ghost" aria-label="Naik" disabled={i === 0} onClick={() => move(i, -1)}>
+            <Button size="sm" variant="ghost" aria-label={t("a.up")} disabled={i === 0} onClick={() => move(i, -1)}>
               ↑
             </Button>
-            <Button size="sm" variant="ghost" aria-label="Turun" disabled={i === items.length - 1} onClick={() => move(i, 1)}>
+            <Button size="sm" variant="ghost" aria-label={t("a.down")} disabled={i === items.length - 1} onClick={() => move(i, 1)}>
               ↓
             </Button>
-            <Button size="sm" variant="ghost" aria-label="Buang baris" className="text-danger" onClick={() => remove(i)}>
+            <Button size="sm" variant="ghost" aria-label={t("a.removeRow")} className="text-danger" onClick={() => remove(i)}>
               ×
             </Button>
           </div>

@@ -58,7 +58,8 @@ src/
   lib/                       Isomorphic helpers safe for the browser
     validation.ts            Zod schemas
     presets.ts               font + colour presets
-    format.ts                Malay date/time, phone, map links, ics
+    format.ts                Malay and English date/time, phone, map links, ics
+    i18n.ts                  every fixed user-facing string in both languages; t(), pick(), cookies
   middleware.ts
 ```
 

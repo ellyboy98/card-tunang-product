@@ -27,7 +27,7 @@ Live: production at https://kad-tunang.vercel.app (Vercel team LAPLACE, project 
 |---|---|
 | `src/components/card/` | The card. One `Card` component renders the public page and the admin live preview. |
 | `src/components/admin/` | Admin UI: guest list, card form, form primitives. |
-| `src/lib/` | Browser-safe: Zod schemas, presets, Malay date/phone/map helpers, API client. |
+| `src/lib/` | Browser-safe: Zod schemas, presets, Malay and English date/phone/map helpers, the i18n dictionary, API client. |
 | `src/server/` | Server only: Drizzle schema and client, repositories, services, auth, storage. |
 | `src/app/api/` | Thin route handlers: parse, call a service, respond. |
 | `src/middleware.ts` | Denies `/admin` and `/api/admin` without the session cookie. |
@@ -69,6 +69,13 @@ Kept here so the docs stay the spec and the reasons stay findable. Where a doc w
 - The petal_fall scatter releases two petals per cover bloom (the first eight) plus ten from the top edge. The doc asks for 18–24 petals plus three per bloom and, a few lines later, for at most 18 alive at once; this sits between the two.
 - `envelope` and `bloom` are Phase 6 (they need an extra SVG each). `ENTRANCE_PRESET_KEYS` lists only shipped variants, so the admin cannot save one that does not exist yet.
 - Scroll reveals hide a section until it is 20 % in view, so a browser with JavaScript disabled would not see the sections. The card needs JavaScript for the cover and RSVP anyway.
+
+**Language**
+
+- Bilingual from Sep 2026 (owner's request after part 2). Fixed strings live in `src/lib/i18n.ts` as two records with the same keys, so TypeScript flags a missing translation. The family's text has an English companion field per item (`title_en`, `opening_text_en`, `closing_text_en`, `labelEn`/`timeEn` on schedule rows, `relationEn` on contacts); blank English shows the Malay. Migration `0003` adds the columns and `default_language`.
+- Guests switch with a cookie (`lang`) and a server re-render rather than client-side swapping, so the HTML is already in the right language and nothing flickers. The admin has its own cookie (`admin_lang`) read by the admin layout and shared through a React context.
+- Route errors are i18n keys translated by `route()` from the request's cookie, so the admin sees "Guest not found" and the guest sees "RSVP is closed" in their own language. Zod's generic messages come from the per-parse locale (`zodErrorMap`); the two custom messages are keys translated by `issueMap`.
+- The root `<html lang>` stays `ms`; the card root and the admin wrapper carry their own `lang` attribute, so the root layout does not have to read cookies for every route.
 
 **Deployment**
 

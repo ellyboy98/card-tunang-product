@@ -2,7 +2,7 @@
 
 ## Goal
 
-A mobile-first invitation card for a Malay engagement ceremony (majlis pertunangan), opened from a WhatsApp link, plus a password-protected admin panel where the family configures the card and manages the guest list without touching code or a database.
+A mobile-first invitation card for a Malay engagement ceremony (majlis pertunangan), opened from a WhatsApp link, plus a password-protected admin panel where the family configures the card and manages the guest list without touching code or a database. Both the card and the admin are available in Bahasa Melayu and English: the admin sets the card's default language and can type an English version of every free-text field; a guest can switch with a BM | EN pill on the card, and the admin can switch the admin UI the same way.
 
 ## Who uses it
 

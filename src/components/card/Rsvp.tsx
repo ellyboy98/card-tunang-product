@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { people, t, type Lang } from "@/lib/i18n";
 import type { GuestOption, RsvpState } from "@/lib/types";
 
 type Props = {
   guests: GuestOption[];
+  lang: Lang;
   /** Admin preview: no network, a fixed sample state. */
   preview?: boolean;
 };
@@ -14,7 +16,8 @@ type Result = { kind: "ok"; state: RsvpState } | { kind: "error" } | null;
 
 const PREVIEW_STATE: Omit<RsvpState, "id" | "label"> = { pax: 4, status: "pending", confirmedPax: null };
 
-export function Rsvp({ guests, preview }: Props) {
+export function Rsvp({ guests, lang, preview }: Props) {
+  const n = (count: number) => ({ n: count, people: people(lang, count) });
   const [guestId, setGuestId] = useState("");
   const [state, setState] = useState<RsvpState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -72,11 +75,11 @@ export function Rsvp({ guests, preview }: Props) {
   return (
     <div className="card__form">
       <label className="card__label" htmlFor="rsvp-guest">
-        Nama
+        {t(lang, "rsvp.name")}
       </label>
       <div className="card__select-wrap">
         <select id="rsvp-guest" className="card__field" value={guestId} onChange={(e) => select(e.target.value)} disabled={loading}>
-          <option value="">Pilih nama anda…</option>
+          <option value="">{t(lang, "rsvp.pickName")}</option>
           {[...groups.entries()].map(([group, list]) => (
             <optgroup key={group} label={group}>
               {list.map((g) => (
@@ -97,7 +100,7 @@ export function Rsvp({ guests, preview }: Props) {
       </div>
       {!state && (
         <p className="card__hint">
-          Senarai disusun mengikut keluarga:
+          {t(lang, "rsvp.groupsHint")}
           <br />
           {[...groups.keys()].join(" · ")}
         </p>
@@ -105,33 +108,33 @@ export function Rsvp({ guests, preview }: Props) {
 
       {result?.kind === "ok" && (
         <p className="card__notice card__notice--sage" role="status">
-          <strong>{result.state.status === "attending" ? `Terima kasih! Kehadiran ${result.state.confirmedPax} orang telah disahkan.` : "Terima kasih atas maklum balas anda."}</strong>
-          <small>Anda boleh mengubahnya di bawah jika ada perubahan.</small>
+          <strong>{result.state.status === "attending" ? t(lang, "rsvp.thanksAttend", n(result.state.confirmedPax ?? 0)) : t(lang, "rsvp.thanksDecline")}</strong>
+          <small>{t(lang, "rsvp.changeBelow")}</small>
         </p>
       )}
       {result?.kind === "error" && (
         <p className="card__notice card__notice--rose" role="alert">
-          Tidak dapat menghantar. Cuba lagi atau hubungi kami.
+          {t(lang, "rsvp.error")}
         </p>
       )}
       {state && !done && answered && (
         <p className="card__notice card__notice--soft" role="status">
-          <strong>{state.status === "attending" ? `Sudah disahkan: hadir, ${state.confirmedPax} orang.` : "Sudah disahkan: tidak dapat hadir."}</strong>
-          <small>Anda boleh mengubahnya di bawah.</small>
+          <strong>{state.status === "attending" ? t(lang, "rsvp.alreadyAttend", n(state.confirmedPax ?? 0)) : t(lang, "rsvp.alreadyDecline")}</strong>
+          <small>{t(lang, "rsvp.changeBelowShort")}</small>
         </p>
       )}
 
       {state && (
         <>
-          <p className="card__invite">Jemputan untuk {state.pax} orang</p>
+          <p className="card__invite">{t(lang, "rsvp.inviteFor", n(state.pax))}</p>
           <label className="card__label" htmlFor="rsvp-pax">
-            Bilangan yang akan hadir
+            {t(lang, "rsvp.paxLabel")}
           </label>
           <div className="card__select-wrap">
             <select id="rsvp-pax" className="card__field" value={pax} onChange={(e) => setPax(Number(e.target.value))}>
-              {Array.from({ length: state.pax }, (_, i) => i + 1).map((n) => (
-                <option key={n} value={n}>
-                  {n} orang
+              {Array.from({ length: state.pax }, (_, i) => i + 1).map((count) => (
+                <option key={count} value={count}>
+                  {t(lang, "rsvp.paxOption", n(count))}
                 </option>
               ))}
             </select>
@@ -141,10 +144,10 @@ export function Rsvp({ guests, preview }: Props) {
           </div>
           <div className="card__btn-row">
             <button type="button" className="card__btn card__btn--filled card__btn--half" disabled={submitting} onClick={() => respond("attending")}>
-              Hadir
+              {t(lang, "rsvp.attend")}
             </button>
             <button type="button" className="card__btn card__btn--outlined card__btn--half" disabled={submitting} onClick={() => respond("declined")}>
-              Tidak dapat hadir
+              {t(lang, "rsvp.decline")}
             </button>
           </div>
         </>

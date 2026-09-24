@@ -1,5 +1,6 @@
 // Rules for the settings row: it always exists, and it crosses the wire as ISO strings.
 import { colorPresetKey, entrancePresetKey, floralPresetKey, fontPresetKey, revealPresetKey, windPresetKey } from "@/lib/presets";
+import { langKey } from "@/lib/i18n";
 import type { SettingsDto } from "@/lib/types";
 import type { SettingsInput } from "@/lib/validation";
 import type { Settings } from "../db/schema";
@@ -38,6 +39,7 @@ export function toDto(row: Settings): SettingsDto {
     entrancePreset: entrancePresetKey(rest.entrancePreset),
     windPreset: windPresetKey(rest.windPreset),
     revealPreset: revealPresetKey(rest.revealPreset),
+    defaultLanguage: langKey(rest.defaultLanguage),
     eventStartAt: eventStartAt?.toISOString() ?? null,
     eventEndAt: eventEndAt?.toISOString() ?? null,
     updatedAt: updatedAt.toISOString(),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { useT } from "./i18n";
 import { Button } from "./ui";
 
 type Props = {
@@ -15,6 +16,7 @@ type Props = {
 /** Dashed drop zone with progress. Uses XHR because fetch has no upload progress events. */
 export function UploadZone({ kind, label, hint, accept, value, onChange }: Props) {
   const id = useId();
+  const { t } = useT();
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,11 +40,11 @@ export function UploadZone({ kind, label, hint, accept, value, onChange }: Props
         data = null;
       }
       if (xhr.status >= 200 && xhr.status < 300 && data?.url) onChange(data.url);
-      else setError(data?.error ?? `Muat naik gagal (${xhr.status})`);
+      else setError(data?.error ?? t("err.uploadFailed", { status: xhr.status }));
     };
     xhr.onerror = () => {
       setProgress(null);
-      setError("Tidak dapat menghantar fail. Cuba lagi.");
+      setError(t("err.uploadSend"));
     };
     xhr.open("POST", "/api/admin/upload");
     xhr.send(body);
@@ -78,26 +80,26 @@ export function UploadZone({ kind, label, hint, accept, value, onChange }: Props
             <div className="min-w-0 flex-1">
               <p className="truncate text-[13px]">{fileName}</p>
               <a href={value} target="_blank" rel="noreferrer" className="text-[12px] text-accent underline">
-                Buka fail
+                {t("a.openFile")}
               </a>
             </div>
             <Button size="sm" disabled={progress !== null} onClick={() => inputRef.current?.click()}>
-              Tukar
+              {t("a.change")}
             </Button>
             <Button size="sm" variant="danger" disabled={progress !== null} onClick={() => onChange(null)}>
-              Buang
+              {t("a.remove")}
             </Button>
           </div>
         ) : (
           <div className="flex items-center justify-between gap-3">
             <p className="text-[13px] text-muted">{hint}</p>
             <Button size="sm" disabled={progress !== null} onClick={() => inputRef.current?.click()}>
-              Muat naik
+              {t("a.upload")}
             </Button>
           </div>
         )}
         {progress !== null && (
-          <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-line" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label="Kemajuan muat naik">
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded bg-line" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} aria-label={t("a.uploadProgress")}>
             <div className="h-full bg-accent transition-[width]" style={{ width: `${progress}%` }} />
           </div>
         )}

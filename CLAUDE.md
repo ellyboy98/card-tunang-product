@@ -10,7 +10,7 @@ Read `docs/` before writing code. The docs are the source of truth; when code an
 - The card is rendered once, by `components/card/Card.tsx`, and reused for the public page and the admin live preview. Never fork it.
 - Zod schemas in `src/lib/validation.ts` are the single definition of every input shape. API routes and admin forms both import them. Never redefine a shape inline.
 - Data access goes through `src/server/repositories/*`. Routes never import Drizzle directly.
-- Formatting helpers (Malay date, time period, phone normalisation, map links) live in `src/lib/format.ts` and nowhere else.
+- Formatting helpers (Malay and English date, time period, phone normalisation, map links) live in `src/lib/format.ts` and nowhere else; user-facing strings live in `src/lib/i18n.ts` and nowhere else.
 
 **Push back.** If a requirement in `docs/` is contradictory, unsafe, or has a simpler equivalent, say so before implementing.
 
@@ -27,7 +27,7 @@ Next.js 15 App Router · TypeScript strict · Tailwind v4 · Drizzle ORM with `p
 
 ## Language
 
-User-facing text (card and admin) is Bahasa Melayu. Code, comments, commit messages, and docs are English.
+User-facing text (card and admin) is bilingual: Bahasa Melayu and English, chosen by the guest on the card and by the admin in the admin UI. Every fixed string lives in `src/lib/i18n.ts` in both languages; never write a user-facing literal in a component. Text the family types in has a Malay field and an optional English field (`*En`), and the card falls back to Malay where English is blank. Code, comments, commit messages, and docs are English.
 
 ## Style
 

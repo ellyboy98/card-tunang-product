@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import type { Lang } from "@/lib/i18n";
 import { WIND_PRESETS, type EntrancePresetKey, type FloralPresetKey, type RevealPresetKey, type WindPresetKey } from "@/lib/presets";
+import { LangToggle } from "./LangToggle";
 import { MusicToggle } from "./MusicToggle";
 
 // The card's motion controller (docs/05 "Motion", "Wind", "Entrance variants").
@@ -17,6 +19,9 @@ type Props = {
   floral: FloralPresetKey;
   reveal: RevealPresetKey;
   musicUrl: string | null;
+  lang: Lang;
+  /** Admin preview switches the language locally; the public page uses the cookie. */
+  onLangChange?: (lang: Lang) => void;
   /** Admin preview: no scroll lock. */
   preview?: boolean;
   style: CSSProperties;
@@ -79,7 +84,7 @@ function makePetal(spec: PetalSpec, layer: Petal["layer"]): Petal & { life: numb
   };
 }
 
-export function CardMotion({ entrance, wind, floral, reveal, musicUrl, preview, style, cover, blooms, children }: Props) {
+export function CardMotion({ entrance, wind, floral, reveal, musicUrl, lang, onLangChange, preview, style, cover, blooms, children }: Props) {
   const [phase, setPhase] = useState<Phase>("cover");
   const [coverGone, setCoverGone] = useState(false);
   const [grown, setGrown] = useState(false);
@@ -218,7 +223,7 @@ export function CardMotion({ entrance, wind, floral, reveal, musicUrl, preview, 
   const back = petals.filter((p) => p.layer === "back");
 
   return (
-    <div className={classes} style={rootStyle} data-phase={phase} data-entrance={entrance} data-floral={floral} data-wind-preset={wind} data-reveal={reveal}>
+    <div className={classes} style={rootStyle} lang={lang} data-phase={phase} data-entrance={entrance} data-floral={floral} data-wind-preset={wind} data-reveal={reveal}>
       {musicUrl && <audio ref={audio} src={musicUrl} preload="none" loop onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
       {children}
       {back.length > 0 && <PetalLayer petals={back} layer="back" />}
@@ -237,7 +242,8 @@ export function CardMotion({ entrance, wind, floral, reveal, musicUrl, preview, 
         </div>
       )}
       {front.length > 0 && <PetalLayer petals={front} layer="front" />}
-      {phase !== "cover" && musicUrl && <MusicToggle playing={playing} onToggle={toggleMusic} />}
+      <LangToggle lang={lang} onChange={onLangChange} />
+      {phase !== "cover" && musicUrl && <MusicToggle playing={playing} onToggle={toggleMusic} lang={lang} />}
     </div>
   );
 }

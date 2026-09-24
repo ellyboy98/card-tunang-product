@@ -2,7 +2,8 @@
 // live preview. Server-friendly: no server imports, so a client tree can mount it.
 import type { CSSProperties, ReactNode } from "react";
 import "./card.css";
-import { formatDateMs, formatTimeRangeMs, formatWeekdayMs, googleCalendarUrl, icsDataUrl, mapLinks, splitPatronym, telUrl, whatsappUrl } from "@/lib/format";
+import { formatDate, formatTimeRange, formatWeekday, googleCalendarUrl, icsDataUrl, mapLinks, splitPatronym, telUrl, whatsappUrl } from "@/lib/format";
+import { pick, t, type Lang } from "@/lib/i18n";
 import { DEFAULT_FLORAL_PRESET, effectiveColors, FLORAL_PRESETS, floralPresetKey, fontPresetKey, textAccent } from "@/lib/presets";
 import type { GuestOption } from "@/lib/types";
 import type { SettingsInput } from "@/lib/validation";
@@ -22,6 +23,10 @@ export type CardSettings = SettingsInput;
 type Props = {
   settings: CardSettings;
   guests: GuestOption[];
+  /** The guest's language: cookie, else the admin's default. */
+  lang: Lang;
+  /** Admin preview switches the language locally instead of through the cookie. */
+  onLangChange?: (lang: Lang) => void;
   /** Admin preview: no scroll lock, no network. */
   preview?: boolean;
 };
@@ -76,7 +81,7 @@ function Names({ first, second, full }: { first: string; second: string; full: b
   );
 }
 
-export function Card({ settings: s, guests, preview }: Props) {
+export function Card({ settings: s, guests, lang, onLangChange, preview }: Props) {
   const { first, second } = coupleNames(s);
   const hostParents = s.hostSide === "bride" ? s.brideParents : s.groomParents;
   const start = s.eventStartAt ? new Date(s.eventStartAt) : null;
@@ -85,29 +90,32 @@ export function Card({ settings: s, guests, preview }: Props) {
   const hasMap = s.venueLat != null && s.venueLng != null;
   const showRsvp = s.isRsvpEnabled && (guests.length > 0 || Boolean(preview));
   const coupleLabel = [first, second].filter(Boolean).join(" & ");
+  const title = pick(lang, s.title, s.titleEn);
+  const openingText = pick(lang, s.openingText, s.openingTextEn);
+  const closingText = pick(lang, s.closingText, s.closingTextEn);
 
   const sections: ReactNode[] = [];
 
   if (start) {
     const event = {
-      title: [s.title, coupleLabel].filter(Boolean).join(" · "),
+      title: [title, coupleLabel].filter(Boolean).join(" · "),
       start,
       end,
       location: [s.venueName, s.venueAddress].filter(Boolean).join(", "),
     };
     sections.push(
       <section key="tarikh" className="card__section">
-        <h2 className="card__heading">Tarikh</h2>
-        <p className="card__weekday card__body">{formatWeekdayMs(start)}</p>
-        <p className="card__display card__date">{formatDateMs(start)}</p>
-        <p className="card__body">{formatTimeRangeMs(start, end)}</p>
-        <Countdown start={s.eventStartAt!} />
+        <h2 className="card__heading">{t(lang, "card.date")}</h2>
+        <p className="card__weekday card__body">{formatWeekday(start, lang)}</p>
+        <p className="card__display card__date">{formatDate(start, lang)}</p>
+        <p className="card__body">{formatTimeRange(start, end, lang)}</p>
+        <Countdown start={s.eventStartAt!} lang={lang} />
         <div className="card__btn-row">
           <a className="card__btn card__btn--outlined" href={googleCalendarUrl(event)} target="_blank" rel="noreferrer">
-            Google Calendar
+            {t(lang, "card.googleCalendar")}
           </a>
           <a className="card__btn card__btn--outlined" href={icsDataUrl(event)} download="majlis-pertunangan.ics">
-            Apple / .ics
+            {t(lang, "card.ics")}
           </a>
         </div>
       </section>,
@@ -118,16 +126,16 @@ export function Card({ settings: s, guests, preview }: Props) {
     const links = hasMap ? mapLinks(s.venueLat!, s.venueLng!) : null;
     sections.push(
       <section key="tempat" className="card__section">
-        <h2 className="card__heading">Tempat</h2>
+        <h2 className="card__heading">{t(lang, "card.venue")}</h2>
         {s.venueName && <p className="card__display card__venue">{s.venueName}</p>}
         {s.venueAddress && <p className="card__body card__address">{s.venueAddress}</p>}
         {links && (
           <div className="card__btn-row">
             <a className="card__btn card__btn--filled" href={links.waze} target="_blank" rel="noreferrer">
-              Buka Waze
+              {t(lang, "card.waze")}
             </a>
             <a className="card__btn card__btn--outlined" href={links.google} target="_blank" rel="noreferrer">
-              Google Maps
+              {t(lang, "card.googleMaps")}
             </a>
           </div>
         )}
@@ -138,13 +146,13 @@ export function Card({ settings: s, guests, preview }: Props) {
   if (s.schedule.length > 0) {
     sections.push(
       <section key="aturcara" className="card__section">
-        <h2 className="card__heading">Atur cara majlis</h2>
+        <h2 className="card__heading">{t(lang, "card.schedule")}</h2>
         <ul className="card__schedule">
           {s.schedule.map((row, i) => (
             <li key={i} className="card__row" style={{ "--i": i } as CSSProperties}>
-              <span className="card__schedule-time">{row.time}</span>
+              <span className="card__schedule-time">{pick(lang, row.time, row.timeEn)}</span>
               <span className="card__schedule-dot" aria-hidden="true" />
-              <span className="card__schedule-label">{row.label}</span>
+              <span className="card__schedule-label">{pick(lang, row.label, row.labelEn)}</span>
             </li>
           ))}
         </ul>
@@ -155,9 +163,9 @@ export function Card({ settings: s, guests, preview }: Props) {
   if (showRsvp) {
     sections.push(
       <section key="kehadiran" className="card__section">
-        <h2 className="card__heading">Kehadiran</h2>
-        <p className="card__body">Pilih nama anda dan sahkan kehadiran.</p>
-        <Rsvp guests={guests} preview={preview} />
+        <h2 className="card__heading">{t(lang, "card.rsvp")}</h2>
+        <p className="card__body">{t(lang, "card.rsvpIntro")}</p>
+        <Rsvp guests={guests} lang={lang} preview={preview} />
       </section>,
     );
   }
@@ -165,20 +173,20 @@ export function Card({ settings: s, guests, preview }: Props) {
   if (s.contacts.length > 0) {
     sections.push(
       <section key="hubungi" className="card__section">
-        <h2 className="card__heading">Hubungi</h2>
+        <h2 className="card__heading">{t(lang, "card.contact")}</h2>
         <ul className="card__contacts">
           {s.contacts.map((c, i) => (
             <li key={i} className="card__contact card__row" style={{ "--i": i } as CSSProperties}>
               <div>
                 <p className="card__contact-name">{c.name}</p>
-                {c.relation && <p className="card__contact-rel">{c.relation}</p>}
+                {c.relation && <p className="card__contact-rel">{pick(lang, c.relation, c.relationEn)}</p>}
               </div>
               <div className="card__contact-actions">
-                <a className="card__pill" href={whatsappUrl(c.phone)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${c.name}`}>
-                  WhatsApp
+                <a className="card__pill" href={whatsappUrl(c.phone)} target="_blank" rel="noreferrer" aria-label={t(lang, "card.whatsappAria", { name: c.name })}>
+                  {t(lang, "card.whatsapp")}
                 </a>
-                <a className="card__pill" href={telUrl(c.phone)} aria-label={`Telefon ${c.name}`}>
-                  Telefon
+                <a className="card__pill" href={telUrl(c.phone)} aria-label={t(lang, "card.callAria", { name: c.name })}>
+                  {t(lang, "card.call")}
                 </a>
               </div>
             </li>
@@ -189,10 +197,10 @@ export function Card({ settings: s, guests, preview }: Props) {
   }
 
   const floral = floralPresetKey(s.floralPreset);
-  const cover = <CoverFace title={s.title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekdayMs(start)}, ${formatDateMs(start)}` : null} floral={floral} />;
+  const cover = <CoverFace title={title} names={<Names first={first} second={second} full={false} />} dateLabel={start ? `${formatWeekday(start, lang)}, ${formatDate(start, lang)}` : null} floral={floral} lang={lang} />;
 
   return (
-    <CardMotion entrance={s.entrancePreset} wind={s.windPreset} floral={floral} reveal={s.revealPreset} musicUrl={s.musicUrl} preview={preview} style={cardVars(s)} cover={cover} blooms={coverBlooms(floral)}>
+    <CardMotion entrance={s.entrancePreset} wind={s.windPreset} floral={floral} reveal={s.revealPreset} musicUrl={s.musicUrl} lang={lang} onLangChange={onLangChange} preview={preview} style={cardVars(s)} cover={cover} blooms={coverBlooms(floral)}>
       {s.backgroundUrl && (
         <>
           <div className="card__bg" style={{ backgroundImage: `url("${s.backgroundUrl.replace(/"/g, "%22")}")` }} aria-hidden="true" />
@@ -210,9 +218,9 @@ export function Card({ settings: s, guests, preview }: Props) {
           <header className="card__header">
             <FloralClusters preset={floral} />
             <div className="card__header-inner">
-              <p className="card__eyebrow">{s.title}</p>
+              <p className="card__eyebrow">{title}</p>
               {hostParents && <p className="card__display card__parents">{hostParents}</p>}
-              {s.openingText && <p className="card__body card__opening card__muted">{s.openingText}</p>}
+              {openingText && <p className="card__body card__opening card__muted">{openingText}</p>}
               {(first || second) && (
                 <div className="card__arch-wrap">
                   <Arch />
@@ -234,7 +242,7 @@ export function Card({ settings: s, guests, preview }: Props) {
           <Reveal side={sections.length % 2 ? -1 : 1}>
             <footer className="card__closing card__section">
               <Sprig width={90} />
-              {s.closingText && <p className="card__closing-text">{s.closingText}</p>}
+              {closingText && <p className="card__closing-text">{closingText}</p>}
               {s.hashtag && <p className="card__eyebrow card__hashtag">#{s.hashtag.replace(/^#/, "")}</p>}
             </footer>
           </Reveal>

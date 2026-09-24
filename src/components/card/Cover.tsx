@@ -2,6 +2,7 @@
 // owns the tap, the timers and the audio. Clicks anywhere on the cover open it,
 // so the button needs no handler of its own.
 import type { CSSProperties, ReactNode } from "react";
+import { t, type Lang } from "@/lib/i18n";
 import type { FloralPresetKey } from "@/lib/presets";
 import { FloralCover } from "./Florals";
 
@@ -10,9 +11,10 @@ type Props = {
   names: ReactNode;
   dateLabel: string | null;
   floral: FloralPresetKey;
+  lang: Lang;
 };
 
-export function CoverFace({ title, names, dateLabel, floral }: Props) {
+export function CoverFace({ title, names, dateLabel, floral, lang }: Props) {
   return (
     <div className="card__cover-face">
       <CoverDecor preset={floral} />
@@ -22,9 +24,9 @@ export function CoverFace({ title, names, dateLabel, floral }: Props) {
         <p className="card__cover-names">{names}</p>
         {dateLabel && <p className="card__cover-date">{dateLabel}</p>}
         <button type="button" className="card__btn card__btn--filled card__cover-btn">
-          Buka jemputan
+          {t(lang, "card.open")}
         </button>
-        <p className="card__cover-hint">Ketik untuk membuka</p>
+        <p className="card__cover-hint">{t(lang, "card.tapHint")}</p>
       </div>
     </div>
   );

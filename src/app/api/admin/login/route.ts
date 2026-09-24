@@ -6,7 +6,7 @@ import { parseJson, route } from "@/server/http";
 
 export const POST = route(async (req) => {
   const { password } = await parseJson(req, loginInput);
-  if (!checkPassword(password)) throw new HttpError(401, "Kata laluan salah");
+  if (!checkPassword(password)) throw new HttpError(401, "err.wrongPassword");
   const res = NextResponse.json({ ok: true });
   res.cookies.set(SESSION_COOKIE, await makeSessionToken(), sessionCookieOptions());
   return res;

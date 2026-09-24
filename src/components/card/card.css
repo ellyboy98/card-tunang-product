@@ -686,6 +686,40 @@
   to { transform: translateX(14px); }
 }
 
+/* language pill: above the cover, out of the tap area */
+.card__lang {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 35;
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--c-accent) 60%, transparent);
+  background: color-mix(in srgb, var(--c-bg) 85%, transparent);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.card--preview .card__lang { position: absolute; }
+.card__lang-btn {
+  min-width: 34px;
+  height: 26px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font: 600 12px/1 var(--f-body);
+  letter-spacing: 0.04em;
+  color: var(--c-ink);
+  opacity: 0.7;
+  cursor: pointer;
+}
+.card__lang-btn--active {
+  background: var(--c-accent-text);
+  color: var(--c-bg);
+  opacity: 1;
+}
+
 /* music */
 .card__music {
   position: fixed;
