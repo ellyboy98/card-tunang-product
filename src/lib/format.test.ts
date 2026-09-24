@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
-  formatDateMs,
-  formatTimeMs,
-  formatTimeRangeMs,
-  formatWeekdayMs,
+  formatDate,
+  formatTime,
+  formatTimeRange,
+  formatWeekday,
   fromKlLocalInput,
   googleCalendarUrl,
   icsDataUrl,
@@ -11,7 +11,7 @@ import {
   mapLinks,
   parseLatLng,
   splitPatronym,
-  timePeriodMs,
+  timePeriod,
   toIntlMy,
   toKlLocalInput,
 } from "./format";
@@ -21,38 +21,50 @@ const kl = (iso: string) => new Date(`${iso}+08:00`);
 
 describe("Malay date", () => {
   it("names weekday and month in Malay", () => {
-    expect(formatWeekdayMs(kl("2027-03-14T11:00:00"))).toBe("Ahad");
-    expect(formatDateMs(kl("2027-03-14T11:00:00"))).toBe("14 Mac 2027");
-    expect(formatDateMs(kl("2027-08-01T09:00:00"))).toBe("1 Ogos 2027");
+    expect(formatWeekday(kl("2027-03-14T11:00:00"), "ms")).toBe("Ahad");
+    expect(formatDate(kl("2027-03-14T11:00:00"), "ms")).toBe("14 Mac 2027");
+    expect(formatDate(kl("2027-08-01T09:00:00"), "ms")).toBe("1 Ogos 2027");
   });
 
   it("uses the KL day, not the UTC day", () => {
     // 23:30 UTC on the 13th is 07:30 on the 14th in KL.
     const d = new Date("2027-03-13T23:30:00Z");
-    expect(formatDateMs(d)).toBe("14 Mac 2027");
+    expect(formatDate(d, "ms")).toBe("14 Mac 2027");
     expect(klDateKey(d)).toBe("2027-03-14");
   });
 });
 
 describe("Malay time", () => {
   it("switches period on the hour boundaries", () => {
-    expect(formatTimeMs(kl("2027-03-14T11:59:00"))).toBe("11:59 pagi");
-    expect(formatTimeMs(kl("2027-03-14T12:00:00"))).toBe("12:00 tengah hari");
-    expect(formatTimeMs(kl("2027-03-14T15:00:00"))).toBe("3:00 petang");
-    expect(formatTimeMs(kl("2027-03-14T19:00:00"))).toBe("7:00 malam");
-    expect(formatTimeMs(kl("2027-03-14T00:05:00"))).toBe("12:05 pagi");
+    expect(formatTime(kl("2027-03-14T11:59:00"), "ms")).toBe("11:59 pagi");
+    expect(formatTime(kl("2027-03-14T12:00:00"), "ms")).toBe("12:00 tengah hari");
+    expect(formatTime(kl("2027-03-14T15:00:00"), "ms")).toBe("3:00 petang");
+    expect(formatTime(kl("2027-03-14T19:00:00"), "ms")).toBe("7:00 malam");
+    expect(formatTime(kl("2027-03-14T00:05:00"), "ms")).toBe("12:05 pagi");
   });
 
   it("maps every hour to a period", () => {
-    expect(timePeriodMs(0)).toBe("pagi");
-    expect(timePeriodMs(13)).toBe("tengah hari");
-    expect(timePeriodMs(14)).toBe("petang");
-    expect(timePeriodMs(23)).toBe("malam");
+    expect(timePeriod(0, "ms")).toBe("pagi");
+    expect(timePeriod(13, "ms")).toBe("tengah hari");
+    expect(timePeriod(14, "ms")).toBe("petang");
+    expect(timePeriod(23, "ms")).toBe("malam");
   });
 
   it("defaults the range end to start + 3 h", () => {
-    expect(formatTimeRangeMs(kl("2027-03-14T11:00:00"))).toBe("11:00 pagi hingga 2:00 petang");
-    expect(formatTimeRangeMs(kl("2027-03-14T11:00:00"), kl("2027-03-14T16:00:00"))).toBe("11:00 pagi hingga 4:00 petang");
+    expect(formatTimeRange(kl("2027-03-14T11:00:00"), null, "ms")).toBe("11:00 pagi hingga 2:00 petang");
+    expect(formatTimeRange(kl("2027-03-14T11:00:00"), kl("2027-03-14T16:00:00"), "ms")).toBe("11:00 pagi hingga 4:00 petang");
+  });
+});
+
+describe("English date and time", () => {
+  it("names weekday and month in English and uses am/pm", () => {
+    expect(formatWeekday(kl("2027-03-14T11:00:00"), "en")).toBe("Sunday");
+    expect(formatDate(kl("2027-03-14T11:00:00"), "en")).toBe("14 March 2027");
+    expect(formatTime(kl("2027-03-14T11:59:00"), "en")).toBe("11:59 am");
+    expect(formatTime(kl("2027-03-14T12:00:00"), "en")).toBe("12:00 pm");
+    expect(formatTime(kl("2027-03-14T00:05:00"), "en")).toBe("12:05 am");
+    expect(timePeriod(19, "en")).toBe("pm");
+    expect(formatTimeRange(kl("2027-03-14T11:00:00"), null, "en")).toBe("11:00 am to 2:00 pm");
   });
 });
 

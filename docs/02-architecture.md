@@ -58,7 +58,8 @@ src/
   lib/                       Isomorphic helpers safe for the browser
     validation.ts            Zod schemas
     presets.ts               font + colour presets
-    format.ts                Malay date/time, phone, map links, ics
+    format.ts                Malay and English date/time, phone, map links, ics
+    i18n.ts                  every fixed user-facing string in both languages; t(), pick(), cookies
   middleware.ts
 ```
 
@@ -73,7 +74,7 @@ Rules that keep this honest:
 ## Request flows
 
 **Guest opens the card**
-`GET /` → `page.tsx` calls `settings.service.get()` → renders `<Card settings=… guests=… />` with CSS variables for the chosen presets (fonts come from `next/font`) → client hydrates Cover, Countdown, Rsvp.
+`GET /` → `page.tsx` calls `settings.service.get()` → renders `<Card settings=… guests=… />` with CSS variables for the chosen presets (fonts come from `next/font`) → client hydrates CardMotion (cover, entrance, wind, petals), Reveal, Countdown, Rsvp.
 
 **Guest confirms**
 `Rsvp.tsx` → `GET /api/guests` (id, label, group_name only; `is_hidden = false`) → user selects → `GET /api/rsvp?guest_id=` for current status and pax → `POST /api/rsvp {guest_id, status, pax}` → `rsvp.service.respond()` clamps pax to the allocation and writes.

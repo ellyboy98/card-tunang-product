@@ -18,7 +18,7 @@ const liveDeps: RsvpDeps = {
   isRsvpEnabled: async () => (await settingsService.get()).isRsvpEnabled,
 };
 
-const notFound = () => new HttpError(404, "Tetamu tidak dijumpai");
+const notFound = () => new HttpError(404, "err.guestNotFound");
 
 export function toRsvpState(g: Guest): RsvpState {
   return { id: g.id, label: g.label, pax: g.pax, status: g.status, confirmedPax: g.confirmedPax };
@@ -31,7 +31,7 @@ export async function getStatus(guestId: number, deps: RsvpDeps = liveDeps): Pro
 }
 
 export async function respond(input: RsvpInput, deps: RsvpDeps = liveDeps): Promise<RsvpState> {
-  if (!(await deps.isRsvpEnabled())) throw new HttpError(403, "RSVP ditutup");
+  if (!(await deps.isRsvpEnabled())) throw new HttpError(403, "err.rsvpClosed");
   const g = await deps.getGuest(input.guestId);
   if (!g || g.isHidden) throw notFound();
 

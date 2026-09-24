@@ -8,7 +8,7 @@ export const POST = route(async (req) => {
   const kind = form?.get("kind");
   const file = form?.get("file");
   if (typeof kind !== "string" || !uploadService.isUploadKind(kind) || !(file instanceof File)) {
-    throw new HttpError(400, "Medan kind (music|background) dan file diperlukan");
+    throw new HttpError(400, "err.uploadFields");
   }
   return NextResponse.json(await uploadService.upload(kind, file));
 });

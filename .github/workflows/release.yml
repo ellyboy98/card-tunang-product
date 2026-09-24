@@ -1,0 +1,106 @@
+# Production release. Starts when a v* tag is pushed, or by hand for any tag.
+#
+#   verify  – the tag must sit on main; typecheck, lint, test, build
+#   deploy  – waits for approval in the "production" environment (Settings →
+#             Environments → production → Required reviewers), then pulls the
+#             production env from Vercel, applies pending Drizzle migrations to
+#             Neon, builds and deploys, and publishes a GitHub release.
+#
+# Secrets (Settings → Secrets and variables → Actions): VERCEL_TOKEN,
+# VERCEL_ORG_ID, VERCEL_PROJECT_ID. DATABASE_URL comes from Vercel itself.
+# Pushes to main no longer deploy on their own (vercel.json → git.deploymentEnabled).
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to deploy, e.g. v0.2.0"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-production
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  verify:
+    name: Verify ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          fetch-depth: 0
+      - name: Tag must point at a commit on main
+        run: |
+          git fetch --no-tags origin main
+          if git merge-base --is-ancestor HEAD origin/main; then
+            echo "$TAG is on main ($(git rev-parse --short HEAD))"
+          else
+            echo "::error::$TAG is not on main. Merge development into main first, then tag."
+            exit 1
+          fi
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm test
+      - run: npx drizzle-kit check
+      - run: npm run build
+
+  deploy:
+    name: Deploy to Vercel
+    needs: verify
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Pull production settings from Vercel
+        run: npx vercel@latest pull --yes --environment=production --token="$VERCEL_TOKEN"
+      - name: Apply pending migrations to Neon
+        # Drizzle keeps a journal in the database, so this is a no-op when nothing is pending.
+        run: |
+          set -a
+          . ./.vercel/.env.production.local
+          set +a
+          test -n "$DATABASE_URL" || { echo "::error::DATABASE_URL missing from the Vercel production environment"; exit 1; }
+          npm run db:migrate
+      - name: Build
+        run: npx vercel@latest build --prod --token="$VERCEL_TOKEN"
+      - name: Deploy
+        id: deploy
+        run: |
+          url=$(npx vercel@latest deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "### Deployed $TAG" >> "$GITHUB_STEP_SUMMARY"
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+      - name: GitHub release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --verify-tag --title "$TAG" --generate-notes

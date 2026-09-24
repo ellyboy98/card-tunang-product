@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_LANG_COOKIE, langKey, t } from "@/lib/i18n";
 import { isValidSession, SESSION_COOKIE } from "@/server/auth";
 
 // Admin pages and routes are denied by default; only the login page and its
@@ -10,7 +11,7 @@ export async function middleware(req: NextRequest) {
   if (await isValidSession(req.cookies.get(SESSION_COOKIE)?.value)) return NextResponse.next();
 
   if (pathname.startsWith("/api/")) {
-    return NextResponse.json({ error: "Tidak dibenarkan" }, { status: 401 });
+    return NextResponse.json({ error: t(langKey(req.cookies.get(ADMIN_LANG_COOKIE)?.value), "err.unauthorized") }, { status: 401 });
   }
   const login = req.nextUrl.clone();
   login.pathname = "/admin/login";

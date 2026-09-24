@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { klDateKey } from "@/lib/format";
+import { t, type Lang } from "@/lib/i18n";
 
 const DAY = 86_400_000;
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-export function Countdown({ start }: { start: string }) {
+export function Countdown({ start, lang }: { start: string; lang: Lang }) {
   // `now` is null until mounted so the server and client render the same placeholder.
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
@@ -20,9 +21,11 @@ export function Countdown({ start }: { start: string }) {
     return (
       <div className="card__countdown card__countdown--hidden" aria-hidden="true">
         <p className="card__countdown-main">
-          <span className="card__countdown-num">000</span> <span className="card__countdown-unit">hari lagi</span>
+          <span className="card__countdown-num">000</span> <span className="card__countdown-unit">{t(lang, "countdown.daysLeft")}</span>
         </p>
-        <p className="card__countdown-sub">00 jam · 00 minit · 00 saat</p>
+        <p className="card__countdown-sub">
+          00 {t(lang, "countdown.hours")} · 00 {t(lang, "countdown.minutes")} · 00 {t(lang, "countdown.seconds")}
+        </p>
       </div>
     );
   }
@@ -33,14 +36,14 @@ export function Countdown({ start }: { start: string }) {
   if (today === eventDay) {
     return (
       <div className="card__countdown" role="status">
-        <p className="card__countdown-state">Hari ini!</p>
+        <p className="card__countdown-state">{t(lang, "countdown.today")}</p>
       </div>
     );
   }
   if (today > eventDay) {
     return (
       <div className="card__countdown" role="status">
-        <p className="card__countdown-state">Terima kasih atas kehadiran</p>
+        <p className="card__countdown-state">{t(lang, "countdown.after")}</p>
       </div>
     );
   }
@@ -54,11 +57,23 @@ export function Countdown({ start }: { start: string }) {
   return (
     <div className="card__countdown">
       <p className="card__countdown-main">
-        <span className="card__countdown-num">{days}</span> <span className="card__countdown-unit">hari lagi</span>
+        <span className="card__countdown-num">
+          <Tick value={String(days)} />
+        </span>{" "}
+        <span className="card__countdown-unit">{t(lang, "countdown.daysLeft")}</span>
       </p>
       <p className="card__countdown-sub">
-        {hours} jam · {pad2(minutes)} minit · {pad2(seconds)} saat
+        <Tick value={String(hours)} /> {t(lang, "countdown.hours")} · <Tick value={pad2(minutes)} /> {t(lang, "countdown.minutes")} · <Tick value={pad2(seconds)} /> {t(lang, "countdown.seconds")}
       </p>
     </div>
+  );
+}
+
+// A new key remounts the span, so the digit fades in; the width is fixed by CSS so nothing shifts.
+function Tick({ value }: { value: string }) {
+  return (
+    <span key={value} className="card__tick" style={{ minWidth: `${value.length}ch` }}>
+      {value}
+    </span>
   );
 }

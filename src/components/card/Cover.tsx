@@ -1,77 +1,68 @@
-"use client";
-
-import { useEffect, useRef, useState, type ReactNode } from "react";
-import { MusicToggle } from "./MusicToggle";
-import { Sprig } from "./Sprig";
+// The cover's face: florals, names, the button. Server-friendly; CardMotion
+// owns the tap, the timers and the audio. Clicks anywhere on the cover open it,
+// so the button needs no handler of its own.
+import type { CSSProperties, ReactNode } from "react";
+import { t, type Lang } from "@/lib/i18n";
+import type { FloralPresetKey } from "@/lib/presets";
+import { FloralCover } from "./Florals";
 
 type Props = {
   title: string;
   names: ReactNode;
   dateLabel: string | null;
-  musicUrl: string | null;
-  /** Admin preview: no scroll lock. */
-  preview?: boolean;
+  floral: FloralPresetKey;
+  lang: Lang;
 };
 
-const FADE_MS = 600;
-
-// The cover owns the <audio> element: the tap that opens the card is the user
-// gesture browsers require before play() is allowed.
-export function Cover({ title, names, dateLabel, musicUrl, preview }: Props) {
-  const [open, setOpen] = useState(false);
-  const [gone, setGone] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const audio = useRef<HTMLAudioElement>(null);
-
-  useEffect(() => {
-    if (preview || open) return;
-    const html = document.documentElement;
-    const previous = html.style.overflow;
-    html.style.overflow = "hidden";
-    return () => {
-      html.style.overflow = previous;
-    };
-  }, [open, preview]);
-
-  function openCard() {
-    if (open) return;
-    setOpen(true);
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    window.setTimeout(() => setGone(true), reduced ? 0 : FADE_MS);
-    // A rejected play() just leaves the toggle in its paused state.
-    audio.current?.play().catch(() => undefined);
-  }
-
-  function toggleMusic() {
-    const el = audio.current;
-    if (!el) return;
-    if (el.paused) el.play().catch(() => undefined);
-    else el.pause();
-  }
-
+export function CoverFace({ title, names, dateLabel, floral, lang }: Props) {
   return (
-    <>
-      {musicUrl && <audio ref={audio} src={musicUrl} preload="none" loop onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} />}
-      {!gone && (
-        <div className={`card__cover${open ? " card__cover--open" : ""}`} onClick={openCard} aria-hidden={open || undefined}>
-          <div className="card__decor" aria-hidden="true">
-            <span className="card__blob card__blob--a" />
-            <span className="card__blob card__blob--b" />
-            <span className="card__blob card__blob--c" />
-          </div>
-          <div className="card__cover-inner">
-            <Sprig width={120} />
-            <p className="card__eyebrow">{title}</p>
-            <p className="card__cover-names">{names}</p>
-            {dateLabel && <p className="card__cover-date">{dateLabel}</p>}
-            <button type="button" className="card__btn card__btn--filled" onClick={openCard} tabIndex={open ? -1 : 0}>
-              Buka jemputan
-            </button>
-            <p className="card__cover-hint">Ketik untuk membuka</p>
-          </div>
-        </div>
-      )}
-      {open && musicUrl && <MusicToggle playing={playing} onToggle={toggleMusic} />}
-    </>
+    <div className="card__cover-face">
+      <CoverDecor preset={floral} />
+      <FloralCover preset={floral} />
+      <div className="card__cover-inner">
+        <p className="card__eyebrow">{title}</p>
+        <p className="card__cover-names">{names}</p>
+        {dateLabel && <p className="card__cover-date">{dateLabel}</p>}
+        <button type="button" className="card__btn card__btn--filled card__cover-btn">
+          {t(lang, "card.open")}
+        </button>
+        <p className="card__cover-hint">{t(lang, "card.tapHint")}</p>
+      </div>
+    </div>
   );
+}
+
+const PHI = 0.6180339887;
+const fract = (v: number) => v - Math.floor(v);
+
+// Watercolour washes: colour, position and size from docs/05.
+const WASHES: Array<[string, number, number, number]> = [
+  ["#F3C9C7", 8, 14, 220],
+  ["#EAD7E3", 78, 30, 200],
+  ["#D9E3D4", 20, 62, 210],
+  ["#F1D4CB", 84, 78, 190],
+  ["#F6DCD8", 50, 96, 230],
+];
+
+/** The pure-CSS parts of a background recipe: fireflies for the garden, washes for the watercolour. */
+function CoverDecor({ preset }: { preset: FloralPresetKey }) {
+  if (preset === "evening_garden") {
+    return (
+      <div className="card__cover-decor" aria-hidden="true">
+        {Array.from({ length: 14 }, (_, i) => (
+          <span key={i} className="card__firefly" style={{ left: `${(fract(i * PHI) * 90 + 5).toFixed(1)}%`, top: `${(fract((i + 3) * PHI) * 80 + 10).toFixed(1)}%`, opacity: 0.5 + fract(i * 0.37) * 0.4 }} />
+        ))}
+      </div>
+    );
+  }
+  if (preset === "watercolor") {
+    return (
+      <div className="card__cover-decor" aria-hidden="true">
+        {WASHES.map(([c, x, y, size], i) => (
+          <span key={i} className="card__wash" style={{ "--wash": c, left: `${x}%`, top: `${y}%`, width: size, height: size * 0.8 } as CSSProperties} />
+        ))}
+      </div>
+    );
+  }
+  return null;
 }

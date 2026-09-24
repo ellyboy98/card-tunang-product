@@ -7,7 +7,7 @@ import { guestsRepo, type GuestUpdate } from "../repositories/guests.repo";
 
 export type GuestsDeps = Pick<typeof guestsRepo, "list" | "listVisibleForDropdown" | "getById" | "create" | "update" | "remove" | "reorder">;
 
-const notFound = () => new HttpError(404, "Tetamu tidak dijumpai");
+const notFound = () => new HttpError(404, "err.guestNotFound");
 
 export function totals(rows: Guest[]): Totals {
   const t: Totals = { households: rows.length, invited: 0, attending: 0, declined: 0, pending: 0 };

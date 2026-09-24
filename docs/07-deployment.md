@@ -2,7 +2,7 @@
 
 One deployment = one event. To run a second event, fork the repo and repeat with a new database.
 
-There are two ways to do this. Both end in the same place: `main` → Production, `development` → Preview, migrations applied, admin reachable.
+There are two ways to set it up. Both end in the same place: `development` → Preview on every push, `main` → Production through the release pipeline below, migrations applied, admin reachable.
 
 ## Option A: Vercel CLI, run by Claude Code (recommended)
 
@@ -42,8 +42,9 @@ rm -f .env.vercel   # never commit this
 
 # 6. Deploy
 git push origin development        # → preview URL printed by Vercel bot / `vercel ls`
-# after owner approval:
-git switch main && git merge --ff-only development && git push origin main   # → production
+# after owner approval: merge, tag, and let the Release pipeline deploy (see "Releases" below)
+git switch main && git merge --ff-only development && git push origin main
+git tag -a v0.1.0 -m "First guest-facing release" && git push origin v0.1.0
 ```
 
 Claude Code must ask the owner for `ADMIN_PASSWORD_FROM_OWNER` rather than inventing one, and must not print it back.
@@ -62,13 +63,35 @@ Verify: `docker compose exec app npx vercel ls` shows both deployments Ready. Op
    ```
 6. Open `/admin`, configure, add guests.
 
-## Migrations on every deploy (optional, after the first release)
+## Releases (GitHub Actions → Vercel)
+
+Pushes to `main` do not deploy by themselves: `vercel.json` sets `git.deploymentEnabled.main` to `false`, so production only changes through `.github/workflows/release.yml`. Preview deployments of `development` are untouched.
+
+1. Merge `development` into `main` (fast-forward) and push a tag `vX.Y.Z` on it.
+2. The **Release** workflow starts. `verify` checks that the tag's commit is on `main`, then runs typecheck, lint, tests, `drizzle-kit check` and a build.
+3. `deploy` waits in the `production` environment. Make it a manual step once: GitHub → Settings → Environments → `production` → **Required reviewers** → add yourself. The run then pauses with a Review button.
+4. On approval it pulls the production environment from Vercel (`vercel pull`), applies pending migrations to Neon with that `DATABASE_URL` (a no-op when nothing is pending), runs `vercel build --prod`, deploys with `vercel deploy --prebuilt --prod`, and creates a GitHub release with generated notes.
+5. To redeploy or retry a tag, run the workflow by hand: Actions → Release → **Run workflow** → enter the tag.
+
+Secrets, set once under Settings → Secrets and variables → Actions:
+
+| Secret | Where it comes from |
+|---|---|
+| `VERCEL_TOKEN` | vercel.com → Account settings → Tokens. Scope it to the team. |
+| `VERCEL_ORG_ID` | `.vercel/project.json` after `vercel link`, field `orgId`; or the team's General settings. |
+| `VERCEL_PROJECT_ID` | Same file, field `projectId`; or Project → Settings → General. |
+
+`DATABASE_URL` is not a GitHub secret: the Neon integration injects it into the Vercel production environment and `vercel pull` brings it into the run.
+
+The **CI** workflow (`ci.yml`) runs the same checks on every push to `development` and `main` and on pull requests.
+
+## Migrations on every deploy (optional, not needed with the release pipeline)
 
 Add to `package.json`:
 ```json
 "vercel-build": "drizzle-kit migrate && next build"
 ```
-Vercel runs this instead of `build`. Migrations then apply automatically on every push to `main` and `development`. Safe because migrations are committed files and Drizzle skips ones already applied. Enable this only after the first manual migration has succeeded.
+Vercel runs this instead of `build`. Migrations then apply automatically on every preview deploy of `development` too. Safe because migrations are committed files and Drizzle skips ones already applied. The release pipeline already does this for production, so only add it if previews need new columns before a release.
 
 ## Custom domain
 

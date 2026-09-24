@@ -115,16 +115,20 @@ export const rsvpInput = z.object({
   pax: z.number().int().min(1).optional(), // no upper bound: the service clamps to the allocation
 });
 export const scheduleItem = z.object({ time: z.string().trim().max(20), label: z.string().trim().max(120) });
-export const contact = z.object({ name: z.string().trim().max(80), relation: z.string().trim().max(60).optional(), phone: z.string().trim().regex(/^\+?\d{9,13}$/) });
+export const scheduleItem = z.object({ time: z.string().trim().max(20), label: z.string().trim().max(120), timeEn: z.string().trim().max(20).optional(), labelEn: z.string().trim().max(120).optional() });
+export const contact = z.object({ name: z.string().trim().max(80), relation: z.string().trim().max(60).optional(), relationEn: z.string().trim().max(60).optional(), phone: z.string().trim().regex(/^\+?\d{9,13}$/, "err.phoneInvalid") });
 export const settingsInput = z.object({
   title: z.string().trim().max(120),
+  titleEn: z.string().trim().max(120),
   brideName: z.string().trim().max(120),
   groomName: z.string().trim().max(120),
   brideParents: z.string().trim().max(240),
   groomParents: z.string().trim().max(240),
   hostSide: z.enum(["bride", "groom"]),
   openingText: z.string().trim().max(600),
+  openingTextEn: z.string().trim().max(600),
   closingText: z.string().trim().max(300),
+  closingTextEn: z.string().trim().max(300),
   hashtag: z.string().trim().max(60).nullable(),
   eventStartAt: z.string().datetime({ offset: true }).nullable(),
   eventEndAt: z.string().datetime({ offset: true }).nullable(),
@@ -139,7 +143,16 @@ export const settingsInput = z.object({
   fontPreset: z.enum(FONT_PRESET_KEYS),
   colorPreset: z.enum(COLOR_PRESET_KEYS),
   isRsvpEnabled: z.boolean(),
-}).refine(s => !s.eventEndAt || !s.eventStartAt || s.eventEndAt > s.eventStartAt, { message: "Tamat mesti selepas mula", path: ["eventEndAt"] });
+  floralPreset: z.enum(FLORAL_PRESET_KEYS),
+  entrancePreset: z.enum(ENTRANCE_PRESET_KEYS),
+  windPreset: z.enum(["off", "gentle", "breezy"]),
+  revealPreset: z.enum(REVEAL_PRESET_KEYS),
+  defaultLanguage: z.enum(["ms", "en"]),
+}).refine(s => !s.eventEndAt || !s.eventStartAt || s.eventEndAt > s.eventStartAt, { message: "err.endBeforeStart", path: ["eventEndAt"] });
 ```
 
-Route handlers call `schema.safeParse(await req.json())` and return `400 { error: "Data tidak sah", issues: parsed.error.flatten() }` on failure. The admin form uses the same schema client-side to show field errors before submitting.
+Route handlers call `schema.safeParse(await req.json())` and return `400 { error, issues: parsed.error.flatten() }` on failure. The admin form uses the same schema client-side to show field errors before submitting, passing its language's Zod locale per parse.
+
+## Language
+
+Every `error` string a route returns is an `i18n.ts` key that `route()` translates using the request's cookie: `admin_lang` for `/api/admin/*`, `lang` for the public routes. Custom Zod messages are keys too (`err.phoneInvalid`, `err.endBeforeStart`); `issueMap()` translates them for the form. `GET /api/admin/export` writes its header row and status words in the admin's language.

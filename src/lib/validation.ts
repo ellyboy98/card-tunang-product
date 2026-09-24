@@ -1,10 +1,14 @@
 // Single definition of every input shape (docs/04-api.md). Routes and admin
 // forms both import from here; never redefine a shape inline.
 import { z } from "zod";
-import { COLOR_PRESET_KEYS, FONT_PRESET_KEYS } from "./presets";
+import { isStringKey, LANGS, t, type Lang } from "./i18n";
+import { COLOR_PRESET_KEYS, ENTRANCE_PRESET_KEYS, FLORAL_PRESET_KEYS, FONT_PRESET_KEYS, REVEAL_PRESET_KEYS, WIND_PRESET_KEYS } from "./presets";
 
-// Field errors are shown to the admin, who reads Malay.
+// Malay is the server default; the admin form passes its own language per parse
+// (see zodErrorMap). Custom messages are i18n keys, translated by issueMap and route().
 z.config(z.locales.ms());
+
+export const zodErrorMap = (lang: Lang) => (lang === "en" ? z.locales.en() : z.locales.ms()).localeError;
 
 export const RSVP_STATUSES = ["pending", "attending", "declined"] as const;
 export const HOST_SIDES = ["bride", "groom"] as const;
@@ -45,27 +49,34 @@ export const reorderInput = z.object({
 
 export const loginInput = z.object({ password: z.string().min(1) });
 
+// The *En fields hold the English version; blank means "show the Malay".
 export const scheduleItem = z.object({
   time: z.string().trim().max(20),
   label: z.string().trim().max(120),
+  timeEn: z.string().trim().max(20).optional(),
+  labelEn: z.string().trim().max(120).optional(),
 });
 
 export const contact = z.object({
   name: z.string().trim().max(80),
   relation: z.string().trim().max(60).optional(),
-  phone: z.string().trim().regex(/^\+?\d{9,13}$/, "Nombor telefon tidak sah"),
+  relationEn: z.string().trim().max(60).optional(),
+  phone: z.string().trim().regex(/^\+?\d{9,13}$/, "err.phoneInvalid"),
 });
 
 export const settingsInput = z
   .object({
     title: z.string().trim().max(120),
+    titleEn: z.string().trim().max(120),
     brideName: z.string().trim().max(120),
     groomName: z.string().trim().max(120),
     brideParents: z.string().trim().max(240),
     groomParents: z.string().trim().max(240),
     hostSide: z.enum(HOST_SIDES),
     openingText: z.string().trim().max(600),
+    openingTextEn: z.string().trim().max(600),
     closingText: z.string().trim().max(300),
+    closingTextEn: z.string().trim().max(300),
     hashtag: z.string().trim().max(60).nullable(),
     eventStartAt: z.iso.datetime({ offset: true }).nullable(),
     eventEndAt: z.iso.datetime({ offset: true }).nullable(),
@@ -79,12 +90,17 @@ export const settingsInput = z
     backgroundUrl: z.url().nullable(),
     fontPreset: z.enum(FONT_PRESET_KEYS),
     colorPreset: z.enum(COLOR_PRESET_KEYS),
+    floralPreset: z.enum(FLORAL_PRESET_KEYS),
+    entrancePreset: z.enum(ENTRANCE_PRESET_KEYS),
+    windPreset: z.enum(WIND_PRESET_KEYS),
+    revealPreset: z.enum(REVEAL_PRESET_KEYS),
     isRsvpEnabled: z.boolean(),
+    defaultLanguage: z.enum(LANGS),
   })
   // Compared as instants, not strings: the two ISO values may carry different offsets.
   .refine(
     (s) => !s.eventEndAt || !s.eventStartAt || Date.parse(s.eventEndAt) > Date.parse(s.eventStartAt),
-    { message: "Tamat mesti selepas mula", path: ["eventEndAt"] },
+    { message: "err.endBeforeStart", path: ["eventEndAt"] },
   );
 
 export type GuestInput = z.infer<typeof guestInput>;
@@ -95,11 +111,11 @@ export type Contact = z.infer<typeof contact>;
 export type SettingsInput = z.infer<typeof settingsInput>;
 
 /** Zod issues → { "schedule.0.label": "message" }, first message per field, for inline errors. */
-export function issueMap(error: z.ZodError): Record<string, string> {
+export function issueMap(error: z.ZodError, lang: Lang): Record<string, string> {
   const out: Record<string, string> = {};
   for (const issue of error.issues) {
     const key = issue.path.map(String).join(".");
-    if (!(key in out)) out[key] = issue.message;
+    if (!(key in out)) out[key] = isStringKey(issue.message) ? t(lang, issue.message) : issue.message;
   }
   return out;
 }

@@ -1,6 +1,9 @@
+import type { CSSProperties } from "react";
+
 // Botanical arch framing the couple's names: a thin arc with 11 leaves along
-// it, alternating tilt and opacity, and a rose bud at every third leaf.
-// No animation, so it is reduced-motion safe by construction.
+// it, alternating tilt and opacity, and a rose bud at every third leaf. The
+// stem draws in and the leaves pop when the root gets `.is-grown` (docs/05
+// "Arch grows"); under reduced motion it is simply there.
 export function Arch() {
   const cx = 150;
   const cy = 146;
@@ -16,11 +19,13 @@ export function Arch() {
   });
   return (
     <svg className="card__arch" viewBox="0 0 300 150" width={300} height={150} aria-hidden="true" focusable="false">
-      <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} fill="none" stroke="var(--c-leaf)" strokeOpacity={0.55} strokeWidth={1} />
+      <path className="card__arch-stem" d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`} pathLength={1} fill="none" stroke="var(--c-floral-leaf)" strokeOpacity={0.55} strokeWidth={1} />
       {items.map((it, i) => (
-        <g key={i}>
-          <ellipse cx={it.x} cy={it.y} rx={8} ry={3.5} fill="var(--c-leaf)" fillOpacity={it.opacity} transform={`rotate(${it.rot.toFixed(1)} ${it.x.toFixed(1)} ${it.y.toFixed(1)})`} />
-          {it.bud && <circle cx={it.x} cy={it.y} r={3.5} fill="var(--c-accent)" />}
+        <g key={i} transform={`translate(${it.x.toFixed(1)} ${it.y.toFixed(1)})`}>
+          <g className="card__arch-leaf" style={{ "--i": i } as CSSProperties}>
+            <ellipse rx={8} ry={3.5} fill="var(--c-floral-leaf)" fillOpacity={it.opacity} transform={`rotate(${it.rot.toFixed(1)})`} />
+          </g>
+          {it.bud && <circle className="card__arch-bud" r={3.5} fill="var(--c-accent)" />}
         </g>
       ))}
     </svg>

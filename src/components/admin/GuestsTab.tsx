@@ -3,12 +3,14 @@
 import { useCallback, useRef, useState, type FormEvent, type InputHTMLAttributes } from "react";
 import { api, errorMessage } from "@/lib/api";
 import type { GuestRow, Totals } from "@/lib/types";
+import type { StringKey } from "@/lib/i18n";
 import { RSVP_STATUSES, type RsvpStatus } from "@/lib/validation";
+import { useT } from "./i18n";
 import { Button, buttonClass, cx, Input, inputClass, Notice, Panel } from "./ui";
 
 export type GuestList = { guests: GuestRow[]; totals: Totals };
 
-const STATUS_LABEL: Record<RsvpStatus, string> = { pending: "Belum jawab", attending: "Hadir", declined: "Tidak hadir" };
+const STATUS_LABEL: Record<RsvpStatus, StringKey> = { pending: "a.pending", attending: "a.attending", declined: "a.declined" };
 const STATUS_CLASS: Record<RsvpStatus, string> = {
   pending: "bg-line/70 text-ink",
   attending: "bg-[#DDE7DA] text-success",
@@ -21,6 +23,7 @@ function sortGuests(rows: GuestRow[]): GuestRow[] {
 }
 
 export function GuestsTab({ initial }: { initial: GuestList }) {
+  const { lang, t } = useT();
   const [guests, setGuests] = useState(initial.guests);
   const [totals, setTotals] = useState(initial.totals);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,7 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
       await refresh();
     } catch (e) {
       setGuests(previous);
-      setError(errorMessage(e, "Tidak dapat menyimpan perubahan."));
+      setError(errorMessage(e, lang, "err.saveChangesFailed"));
     }
   }
 
@@ -53,7 +56,7 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
     );
 
   const remove = (g: GuestRow) => {
-    if (!window.confirm(`Padam "${g.label}"? Tindakan ini tidak boleh dibatalkan.`)) return;
+    if (!window.confirm(t("a.confirmDelete", { name: g.label }))) return;
     void mutate(
       (rows) => rows.filter((r) => r.id !== g.id),
       () => api(`/api/admin/guests/${g.id}`, { method: "DELETE" }),
@@ -90,7 +93,7 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
       await refresh();
       labelRef.current?.focus();
     } catch (err) {
-      setError(errorMessage(err, "Tidak dapat menambah tetamu."));
+      setError(errorMessage(err, lang, "err.addGuestFailed"));
     } finally {
       setAdding(false);
     }
@@ -100,29 +103,29 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
     <>
       <Panel>
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-          <Stat label="Pax dijemput" value={totals.invited} hint={`${totals.households} isi rumah`} />
-          <Stat label="Hadir" value={totals.attending} tone="success" />
-          <Stat label="Tidak hadir" value={totals.declined} />
-          <Stat label="Belum jawab" value={totals.pending} />
+          <Stat label={t("a.invitedPax")} value={totals.invited} hint={t("a.households", { n: totals.households })} />
+          <Stat label={t("a.attending")} value={totals.attending} tone="success" />
+          <Stat label={t("a.declined")} value={totals.declined} />
+          <Stat label={t("a.pending")} value={totals.pending} />
         </dl>
       </Panel>
 
-      <Panel title="Tambah tetamu">
+      <Panel title={t("a.addGuest")}>
         <form onSubmit={add} className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_80px_auto] sm:items-end">
           <label className="flex flex-col gap-1 text-[13px] font-semibold">
-            Nama
-            <Input ref={labelRef} required maxLength={120} placeholder="Pak Cik Ahmad (Klang) sekeluarga" value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
+            {t("a.name")}
+            <Input ref={labelRef} required maxLength={120} placeholder={t("a.guestPlaceholder")} value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-semibold">
-            Kumpulan
+            {t("a.group")}
             <Input list="guest-groups" maxLength={60} placeholder="Lain-lain" value={draft.groupName} onChange={(e) => setDraft({ ...draft, groupName: e.target.value })} />
           </label>
           <label className="flex flex-col gap-1 text-[13px] font-semibold">
-            Pax
+            {t("a.pax")}
             <Input type="number" inputMode="numeric" min={1} max={50} required value={draft.pax} onChange={(e) => setDraft({ ...draft, pax: e.target.value })} />
           </label>
           <Button type="submit" variant="primary" disabled={adding}>
-            Tambah
+            {t("a.add")}
           </Button>
         </form>
         <datalist id="guest-groups">
@@ -133,10 +136,10 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
       </Panel>
 
       <Panel
-        title="Senarai tetamu"
+        title={t("a.guestList")}
         actions={
           <a href="/api/admin/export" download className={buttonClass("secondary", "sm")}>
-            Muat turun CSV
+            {t("a.downloadCsv")}
           </a>
         }
       >
@@ -146,19 +149,19 @@ export function GuestsTab({ initial }: { initial: GuestList }) {
           </div>
         )}
         {guests.length === 0 ? (
-          <p className="py-6 text-center text-[13px] text-muted">Belum ada tetamu. Tambah isi rumah pertama di atas.</p>
+          <p className="py-6 text-center text-[13px] text-muted">{t("a.noGuests")}</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-[14px]">
               <thead>
                 <tr className="border-b border-line text-left text-[11px] uppercase tracking-wider text-muted">
-                  <th className="py-2 pr-3 font-semibold">Nama</th>
-                  <th className="py-2 pr-3 font-semibold">Kumpulan</th>
-                  <th className="py-2 pr-3 font-semibold">Pax</th>
-                  <th className="py-2 pr-3 font-semibold">Status</th>
-                  <th className="py-2 pr-3 font-semibold">Hadir</th>
+                  <th className="py-2 pr-3 font-semibold">{t("a.name")}</th>
+                  <th className="py-2 pr-3 font-semibold">{t("a.group")}</th>
+                  <th className="py-2 pr-3 font-semibold">{t("a.pax")}</th>
+                  <th className="py-2 pr-3 font-semibold">{t("a.status")}</th>
+                  <th className="py-2 pr-3 font-semibold">{t("a.attending")}</th>
                   <th className="py-2 font-semibold">
-                    <span className="sr-only">Tindakan</span>
+                    <span className="sr-only">{t("a.actions")}</span>
                   </th>
                 </tr>
               </thead>
@@ -212,14 +215,15 @@ function GuestTableRow({
   onMove: (dir: -1 | 1) => void;
   onRemove: () => void;
 }) {
+  const { t } = useT();
   return (
     <tr className={cx("border-b border-line/70 align-middle", g.isHidden && "opacity-50")}>
       <td className="py-2 pr-3">
         <EditableName value={g.label} onCommit={(label) => onPatch({ label })} />
-        {g.isHidden && <span className="ml-1 text-[12px] text-muted">(disembunyi)</span>}
+        {g.isHidden && <span className="ml-1 text-[12px] text-muted">{t("a.hidden")}</span>}
       </td>
       <td className="w-[220px] py-2 pr-3">
-        <BlurInput list="guest-groups" maxLength={60} value={g.groupName} aria-label={`Kumpulan untuk ${g.label}`} onCommit={(v) => (v.trim() ? onPatch({ groupName: v.trim() }) : false)} />
+        <BlurInput list="guest-groups" maxLength={60} value={g.groupName} aria-label={t("a.groupFor", { name: g.label })} onCommit={(v) => (v.trim() ? onPatch({ groupName: v.trim() }) : false)} />
       </td>
       <td className="w-[80px] py-2 pr-3">
         <BlurInput
@@ -228,7 +232,7 @@ function GuestTableRow({
           min={1}
           max={50}
           value={String(g.pax)}
-          aria-label={`Pax untuk ${g.label}`}
+          aria-label={t("a.paxFor", { name: g.label })}
           onCommit={(v) => {
             const pax = Number(v);
             if (!Number.isInteger(pax) || pax < 1 || pax > 50) return false;
@@ -240,29 +244,29 @@ function GuestTableRow({
         <select
           value={g.status}
           onChange={(e) => onPatch({ status: e.target.value as RsvpStatus })}
-          aria-label={`Status untuk ${g.label}`}
+          aria-label={t("a.statusFor", { name: g.label })}
           className={cx("h-[28px] rounded-full border-0 px-3 text-[12px] font-semibold", STATUS_CLASS[g.status])}
         >
           {RSVP_STATUSES.map((s) => (
             <option key={s} value={s}>
-              {STATUS_LABEL[s]}
+              {t(STATUS_LABEL[s])}
             </option>
           ))}
         </select>
       </td>
       <td className="w-[70px] py-2 pr-3 tabular-nums">{g.confirmedPax ?? "–"}</td>
       <td className="whitespace-nowrap py-2 text-right">
-        <Button size="sm" variant="ghost" aria-label="Naik" title="Naik" disabled={!canUp} onClick={() => onMove(-1)}>
+        <Button size="sm" variant="ghost" aria-label={t("a.up")} title={t("a.up")} disabled={!canUp} onClick={() => onMove(-1)}>
           ↑
         </Button>
-        <Button size="sm" variant="ghost" aria-label="Turun" title="Turun" disabled={!canDown} onClick={() => onMove(1)}>
+        <Button size="sm" variant="ghost" aria-label={t("a.down")} title={t("a.down")} disabled={!canDown} onClick={() => onMove(1)}>
           ↓
         </Button>
         <Button size="sm" variant="ghost" onClick={() => onPatch({ isHidden: !g.isHidden })}>
-          {g.isHidden ? "Tunjuk" : "Sembunyi"}
+          {g.isHidden ? t("a.show") : t("a.hide")}
         </Button>
         <Button size="sm" variant="ghost" className="text-danger" onClick={onRemove}>
-          Padam
+          {t("a.delete")}
         </Button>
       </td>
     </tr>
@@ -271,6 +275,7 @@ function GuestTableRow({
 
 /** Click-to-edit text. Enter or blur saves, Escape cancels. */
 function EditableName({ value, onCommit }: { value: string; onCommit: (v: string) => void }) {
+  const { t } = useT();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const cancelled = useRef(false);
@@ -285,7 +290,7 @@ function EditableName({ value, onCommit }: { value: string; onCommit: (v: string
           setEditing(true);
         }}
         className="text-left font-medium underline-offset-2 hover:underline hover:decoration-accent"
-        title="Klik untuk mengubah nama"
+        title={t("a.clickToEdit")}
       >
         {value}
       </button>
@@ -303,7 +308,7 @@ function EditableName({ value, onCommit }: { value: string; onCommit: (v: string
       autoFocus
       value={draft}
       maxLength={120}
-      aria-label="Nama"
+      aria-label={t("a.name")}
       onChange={(e) => setDraft(e.target.value)}
       onBlur={commit}
       onKeyDown={(e) => {

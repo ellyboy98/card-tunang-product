@@ -1,11 +1,19 @@
-// Malay date/time, phone, map and calendar helpers (docs/03 "Derived values").
-// Browser-safe: no imports from server/. Month and weekday names are fixed here
-// rather than taken from Intl's `ms` locale so output is identical on every runtime.
+// Date/time (Malay and English), phone, map and calendar helpers (docs/03
+// "Derived values"). Browser-safe: no imports from server/. Month and weekday
+// names are fixed here rather than taken from Intl locales so output is
+// identical on every runtime.
+import type { Lang } from "./i18n";
 
 export const KL_TZ = "Asia/Kuala_Lumpur";
 
-const MONTHS_MS = ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"];
-const WEEKDAYS_MS = ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"];
+const MONTHS: Record<Lang, string[]> = {
+  ms: ["Januari", "Februari", "Mac", "April", "Mei", "Jun", "Julai", "Ogos", "September", "Oktober", "November", "Disember"],
+  en: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+};
+const WEEKDAYS: Record<Lang, string[]> = {
+  ms: ["Ahad", "Isnin", "Selasa", "Rabu", "Khamis", "Jumaat", "Sabtu"],
+  en: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+};
 const WEEKDAY_INDEX: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
 const partsFormatter = new Intl.DateTimeFormat("en-US", {
@@ -37,30 +45,31 @@ export function klParts(d: Date): KlParts {
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-/** "Ahad" */
-export function formatWeekdayMs(d: Date): string {
-  return WEEKDAYS_MS[klParts(d).weekday];
+/** "Ahad" / "Sunday" */
+export function formatWeekday(d: Date, lang: Lang): string {
+  return WEEKDAYS[lang][klParts(d).weekday];
 }
 
-/** "14 Mac 2027" */
-export function formatDateMs(d: Date): string {
+/** "14 Mac 2027" / "14 March 2027" */
+export function formatDate(d: Date, lang: Lang): string {
   const p = klParts(d);
-  return `${p.day} ${MONTHS_MS[p.month - 1]} ${p.year}`;
+  return `${p.day} ${MONTHS[lang][p.month - 1]} ${p.year}`;
 }
 
-/** Malay time-of-day word for a 0-23 hour. */
-export function timePeriodMs(hour: number): string {
+/** Time-of-day word for a 0-23 hour: Malay has four, English has am/pm. */
+export function timePeriod(hour: number, lang: Lang): string {
+  if (lang === "en") return hour < 12 ? "am" : "pm";
   if (hour < 12) return "pagi";
   if (hour < 14) return "tengah hari";
   if (hour < 19) return "petang";
   return "malam";
 }
 
-/** "11:00 pagi" */
-export function formatTimeMs(d: Date): string {
+/** "11:00 pagi" / "11:00 am" */
+export function formatTime(d: Date, lang: Lang): string {
   const p = klParts(d);
   const h12 = p.hour % 12 || 12;
-  return `${h12}:${pad2(p.minute)} ${timePeriodMs(p.hour)}`;
+  return `${h12}:${pad2(p.minute)} ${timePeriod(p.hour, lang)}`;
 }
 
 export const DEFAULT_EVENT_HOURS = 3;
@@ -70,9 +79,9 @@ export function eventEnd(start: Date, end?: Date | null): Date {
   return end ?? new Date(start.getTime() + DEFAULT_EVENT_HOURS * 3600_000);
 }
 
-/** "11:00 pagi hingga 2:00 petang" */
-export function formatTimeRangeMs(start: Date, end?: Date | null): string {
-  return `${formatTimeMs(start)} hingga ${formatTimeMs(eventEnd(start, end))}`;
+/** "11:00 pagi hingga 2:00 petang" / "11:00 am to 2:00 pm" */
+export function formatTimeRange(start: Date, end: Date | null | undefined, lang: Lang): string {
+  return `${formatTime(start, lang)} ${lang === "en" ? "to" : "hingga"} ${formatTime(eventEnd(start, end), lang)}`;
 }
 
 /** "2027-03-14" in KL time; two instants share a key when they fall on the same KL day. */

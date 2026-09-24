@@ -20,9 +20,9 @@ export function isUploadKind(kind: string): kind is UploadKind {
 export async function upload(kind: UploadKind, file: File, storage: StorageAdapter = getStorage()): Promise<{ url: string }> {
   const rule = RULES[kind];
   const ext = rule.ext[file.type];
-  if (!ext) throw new HttpError(415, "Format fail tidak disokong");
-  if (file.size === 0) throw new HttpError(400, "Fail kosong");
-  if (file.size > rule.maxBytes) throw new HttpError(413, `Fail terlalu besar (had ${rule.maxBytes / MB} MB)`);
+  if (!ext) throw new HttpError(415, "err.fileType");
+  if (file.size === 0) throw new HttpError(400, "err.fileEmpty");
+  if (file.size > rule.maxBytes) throw new HttpError(413, "err.fileTooBig", undefined, { mb: rule.maxBytes / MB });
   return storage.put(`${kind}/${Date.now()}.${ext}`, file);
 }
 

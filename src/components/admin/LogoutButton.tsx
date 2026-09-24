@@ -3,10 +3,12 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { api } from "@/lib/api";
+import { useT } from "./i18n";
 import { Button } from "./ui";
 
 export function LogoutButton() {
   const router = useRouter();
+  const { t } = useT();
   const [busy, setBusy] = useState(false);
   async function logout() {
     setBusy(true);
@@ -19,7 +21,7 @@ export function LogoutButton() {
   }
   return (
     <Button onClick={logout} disabled={busy}>
-      Log keluar
+      {t("a.logout")}
     </Button>
   );
 }
