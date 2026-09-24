@@ -177,7 +177,7 @@ Trigger: 600 ms after the cover starts parting (the arch is visible through the 
 Runs once. Uses a `.is-grown` class set by state; not scroll-linked.
 
 ### 3. Scroll reveals
-`useInView(ref, { threshold: 0.2, once: true })` adds `.is-visible`.
+`<Reveal>` (an IntersectionObserver) adds `.is-visible` when 20 % of the section is in view and removes it once the section has fully left, so the transition plays again each time a guest scrolls back to it. The sprig redraws with it.
 - Section body: `opacity 0 → 1`, `translateY(16px) → 0`, `var(--dur-med)`, `--ease-out`.
 - Sprig dividers: same stem-draw and leaf-pop as the arch, at half the durations (stem 600 ms, leaves 300 ms with 50 ms stagger).
 - Atur cara rows: stagger 60 ms per row.

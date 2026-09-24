@@ -2,31 +2,35 @@
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-// Adds `.is-visible` once 20 % of the wrapper has scrolled into view, once.
-// The reveal preset's CSS does the rest (docs/05 "Section transitions").
+// Toggles `.is-visible` as the wrapper scrolls in and out, so the section's
+// transition replays every time it comes back (docs/05 "Section transitions").
+// Hysteresis keeps the edges calm: it shows at 20 % visible and hides only
+// once nothing of it is on screen, so a section never fades while still in view.
+const SHOW_AT = 0.2;
+
 export function Reveal({ children, side }: { children: ReactNode; side: 1 | -1 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
-    if (!el || visible) return;
+    if (!el) return;
     if (!("IntersectionObserver" in window)) {
       setVisible(true);
       return;
     }
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisible(true);
-          io.disconnect();
+        for (const e of entries) {
+          if (e.intersectionRatio >= SHOW_AT) setVisible(true);
+          else if (!e.isIntersecting) setVisible(false);
         }
       },
-      { threshold: 0.2 },
+      { threshold: [0, SHOW_AT] },
     );
     io.observe(el);
     return () => io.disconnect();
-  }, [visible]);
+  }, []);
 
   return (
     <div ref={ref} className={`card__reveal${visible ? " is-visible" : ""}`} style={{ "--side": side } as CSSProperties}>
