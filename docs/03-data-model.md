@@ -44,10 +44,11 @@ erDiagram
     text          background_url  "nullable"
     text          font_preset     "key of FONT_PRESETS"
     text          color_preset    "key of COLOR_PRESETS"
-    text          cover_transition "storm | soft | plain"
-    text          petal_style     "mix | petal | blossom | leaf"
-    text          petal_density   "sparse | normal | dense"
     boolean       is_rsvp_enabled
+    text          floral_preset   "key of FLORAL_PRESETS"
+    text          entrance_preset "key of ENTRANCE_PRESETS"
+    text          wind_preset     "off | gentle | breezy"
+    text          reveal_preset   "key of REVEAL_PRESETS"
     timestamptz   updated_at
   }
 ```
@@ -115,10 +116,11 @@ Exactly one row, `id = 1`. `settings.service.get()` inserts the default row if m
 | `background_url` | `text` | yes | `NULL` | Public URL from the storage adapter |
 | `font_preset` | `text` | no | `'classic'` | Must be a key of `FONT_PRESETS`; unknown keys fall back to `classic` at render time. |
 | `color_preset` | `text` | no | `'blush'` | Must be a key of `COLOR_PRESETS`; fallback `blush`. |
-| `cover_transition` | `text` | no | `'storm'` | Key of `COVER_TRANSITIONS`; fallback `storm`. How the cover gives way to the card (docs/05 "Motion options"). |
-| `petal_style` | `text` | no | `'mix'` | Key of `PETAL_STYLES`; fallback `mix`. Shape of the falling petals. |
-| `petal_density` | `text` | no | `'normal'` | Key of `PETAL_DENSITIES`; fallback `normal`. Multiplies every petal count. |
 | `is_rsvp_enabled` | `boolean` | no | `true` | When false the Kehadiran section is hidden and `POST /api/rsvp` returns 403. |
+| `floral_preset` | `text` | no | `'peony_corners'` | Key of `FLORAL_PRESETS` (see `docs/05` → Floral themes). Fallback `peony_corners`. |
+| `entrance_preset` | `text` | no | `'petal_fall'` | Key of `ENTRANCE_PRESETS`. Fallback `petal_fall`. |
+| `wind_preset` | `text` | no | `'gentle'` | `off` \| `gentle` \| `breezy`. |
+| `reveal_preset` | `text` | no | `'fade_up'` | Key of `REVEAL_PRESETS`. |
 | `updated_at` | `timestamptz` | no | `now()` | |
 
 ### JSON shapes (also the Zod schemas)
@@ -181,10 +183,11 @@ export const settings = pgTable("settings", {
   backgroundUrl:  text("background_url"),
   fontPreset:     text("font_preset").notNull().default("classic"),
   colorPreset:    text("color_preset").notNull().default("blush"),
-  coverTransition: text("cover_transition").notNull().default("storm"),
-  petalStyle:     text("petal_style").notNull().default("mix"),
-  petalDensity:   text("petal_density").notNull().default("normal"),
   isRsvpEnabled:  boolean("is_rsvp_enabled").notNull().default(true),
+  floralPreset:   text("floral_preset").notNull().default("peony_corners"),
+  entrancePreset: text("entrance_preset").notNull().default("petal_fall"),
+  windPreset:     text("wind_preset").notNull().default("gentle"),
+  revealPreset:   text("reveal_preset").notNull().default("fade_up"),
   updatedAt:      timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [ check("settings_singleton", sql`${t.id} = 1`) ]);
 ```

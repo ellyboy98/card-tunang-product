@@ -138,10 +138,11 @@ export const settingsInput = z.object({
   backgroundUrl: z.string().url().nullable(),
   fontPreset: z.enum(FONT_PRESET_KEYS),
   colorPreset: z.enum(COLOR_PRESET_KEYS),
-  coverTransition: z.enum(COVER_TRANSITION_KEYS),
-  petalStyle: z.enum(PETAL_STYLE_KEYS),
-  petalDensity: z.enum(PETAL_DENSITY_KEYS),
   isRsvpEnabled: z.boolean(),
+  floralPreset: z.enum(FLORAL_PRESET_KEYS),
+  entrancePreset: z.enum(ENTRANCE_PRESET_KEYS),
+  windPreset: z.enum(["off", "gentle", "breezy"]),
+  revealPreset: z.enum(REVEAL_PRESET_KEYS),
 }).refine(s => !s.eventEndAt || !s.eventStartAt || s.eventEndAt > s.eventStartAt, { message: "Tamat mesti selepas mula", path: ["eventEndAt"] });
 ```
 

@@ -15,8 +15,10 @@ Estimated total: 2–3 focused days. The card design (Phase 5) is the largest si
 - `CLAUDE.md` and `docs/` copied into the repo root.
 - Git initialised with `main` and `development` per `docs/09`; GitHub remote added; both branches pushed.
 
+- Start Docker yourself. Check with `docker info`; if the daemon is not running, launch Docker Desktop (`open -a Docker` on macOS, `Start-Process "Docker Desktop"` on Windows, `sudo systemctl start docker` on Linux) and poll `docker info` every 5 s for up to 2 minutes. Then `docker compose up -d --build` and wait for `curl -sf http://localhost:3000` to succeed. Only ask the owner if Docker Desktop is not installed.
+
 **Acceptance**
-- `docker compose up` serves the default Next page on :3000 with no host installs.
+- `docker compose up -d` serves the default Next page on :3000 with no host installs.
 - `docker compose exec app npm run typecheck && npm run lint && npm test` all pass.
 
 ---
@@ -99,10 +101,15 @@ Estimated total: 2–3 focused days. The card design (Phase 5) is the largest si
 - Cover unlocks audio; music toggle; body scroll lock while cover is up.
 - Countdown with no layout shift; day-boundary logic in `Asia/Kuala_Lumpur`.
 - RSVP flow with all states in `docs/05`.
+- Florals per `docs/05` → Floral themes: inline the SVGs from `assets/florals` and `assets/elements` as components, keep `data-wind` and ids, apply the preset's background recipe, reuse corner clusters and sprig dividers in the card body.
+- Motion per `docs/05` → Motion, Wind, Entrance variants, Section transitions: `<Entrance>` with `petal_fall`, `curtain`, `slide_up`, `slide_left`, `fade` first (`envelope`, `bloom` in Phase 6), wind sway + gusts with per-element seeded phase, `PetalDrift`, `useInView` reveals with the three reveal presets, micro-interactions. All CSS transform/opacity; all gated on `prefers-reduced-motion`; wind never runs during the entrance.
 
 **Acceptance**
+- Each shipped entrance preset plays as specified; `petal_fall` shows the cover blooms scattering into petals and the card clusters regrowing. With `prefers-reduced-motion: reduce` every preset becomes a 200 ms fade.
+- With `wind_preset=gentle`, florals sway out of phase and a gust visibly travels left→right every 9–16 s; `off` freezes them; `breezy` is noticeably stronger but never distracting from text.
+- Switching `floral_preset` in admin changes the cover, the card's corner clusters, the divider colour, and (for `evening_garden`) text colours, with no code change.
 - Matches the Figma frames `01`, `02`, `03` closely enough that a side-by-side at 390 px shows the same hierarchy, spacing rhythm, and colours.
-- Lighthouse mobile on the card: Performance ≥ 90, Accessibility ≥ 95, with music and background configured.
+- Lighthouse mobile on the card: Performance ≥ 90, Accessibility ≥ 95, with music, background, and motion enabled.
 - Tested on a real Android Chrome and iOS Safari: cover tap starts music; Waze button opens the Waze app when installed.
 
 ---
@@ -112,6 +119,8 @@ Estimated total: 2–3 focused days. The card design (Phase 5) is the largest si
 **Tasks**
 - Mount `<Card settings={formState} preview />` in the Kad tab's right column, scaled with `transform: scale(300/390)` inside a fixed-size wrapper; `preview` prop disables the cover lock and the RSVP fetches (render RSVP with placeholder options).
 - Every colour preset checked for contrast; every font preset checked for Malay diacritics and the "&".
+- `envelope` and `bloom` entrance presets, with their extra SVGs.
+- "Pratonton animasi" button in the Kad tab replays the selected entrance in the preview.
 - 404 and error pages in the card's style.
 - README updated with any deviations from the docs, and why.
 
